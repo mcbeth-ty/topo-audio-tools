@@ -18,3 +18,10 @@ venv/
 # Generated files
 topo-analysis/archive/audio/
 topo-analysis/archive/midi/
+
+# Generated analysis output
+topo-analysis/output/
+
+# Optional backups / duplicate scripts
+* copy.py
+*_backup.py
