@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Virtual environments
+venv/
+.venv/
+
+# Streamlit
+.streamlit/
+
+# VS Code
+.vscode/
+
+# Generated files
+topo-analysis/archive/audio/
+topo-analysis/archive/midi/

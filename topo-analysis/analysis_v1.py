@@ -1,0 +1,1650 @@
+import json
+import csv
+import matplotlib.pyplot as plt
+from pathlib import Path
+import plotly.graph_objects as go
+from sklearn.manifold import MDS
+import math
+import numpy as np
+from scipy.stats import pearsonr
+import plotly.io as pio
+
+PLOT_FONT = "Arial, Helvetica, sans-serif"
+
+pio.templates.default = "plotly_dark"
+
+BASE_DIR = Path(__file__).parent
+
+ARCHIVE_DIR = BASE_DIR / "archive"
+SAMPLE_SETS_DIR = ARCHIVE_DIR / "sample_sets"
+PARTICIPANT_TRIALS_DIR = ARCHIVE_DIR / "participant_trials"
+
+AUDIO_DIR = ARCHIVE_DIR / "audio"
+
+OUTPUT_DIR = BASE_DIR / "output"
+
+OUTPUT_PATH = OUTPUT_DIR / "joined_harmonic_mapping_data.csv"
+TRANSITION_SUMMARY_PATH = OUTPUT_DIR / "transition_summary.csv"
+SAMPLE_SUMMARY_PATH = OUTPUT_DIR / "sample_summary.csv"
+
+VERBOSE = True
+
+FILTERS = {
+    "participant_id": None,
+    "methodology_id": None,
+    "sample_set_id": "260530_17_37_Dm_2HE",
+}
+
+#none means include everything 
+
+def apply_topology_plot_theme(fig):
+
+    fig.update_layout(
+        template="plotly_dark",
+        plot_bgcolor="#0a0a0a",
+        paper_bgcolor="#0a0a0a",
+
+        margin=dict(
+            l=60,
+            r=20,
+            t=40,
+            b=60
+        ),
+
+        hoverlabel=dict(
+            bgcolor="#151515",
+            font_color="#d0d0d0",
+            bordercolor="#444444"
+        ),
+
+        font=dict(
+            family=PLOT_FONT,
+            size=8,
+            color="#d0d0d0"
+        ),
+
+        xaxis_title_font=dict(
+            family=PLOT_FONT,
+            size=10,
+            color="#d0d0d0"
+        ),
+
+        yaxis_title_font=dict(
+            family=PLOT_FONT,
+            size=10,
+            color="#d0d0d0"
+        )
+    )
+
+    fig.update_xaxes(
+        gridcolor="#2b2f3a",
+        linecolor="#2b2f3a",
+        tickfont=dict(
+            family=PLOT_FONT,
+            size=8,
+            color="#d0d0d0"
+        ),
+        title_font=dict(
+            family=PLOT_FONT,
+            size=10,
+            color="#d0d0d0"
+        )
+    )
+
+    fig.update_yaxes(
+        gridcolor="#2b2f3a",
+        linecolor="#2b2f3a",
+        tickfont=dict(
+            family=PLOT_FONT,
+            size=8,
+            color="#d0d0d0"
+        ),
+        title_font=dict(
+            family=PLOT_FONT,
+            size=10,
+            color="#d0d0d0"
+        )
+    )
+
+    return fig
+
+def load_json(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def get_event(sample, index):
+    return sample["events"][index]
+
+def plot_affect_trajectories(rows, output_dir):
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    for r in rows:
+
+        x1 = r["start_stability"]
+        y1 = r["start_brightness"]
+
+        x2 = r["end_stability"]
+        y2 = r["end_brightness"]
+
+        ax.annotate(
+            "",
+            xy=(x2, y2),
+            xytext=(x1, y1),
+            arrowprops=dict(
+                arrowstyle="->",
+                linewidth=1.5
+            )
+        )
+
+        # start point only
+        ax.scatter(x1, y1, s=40)
+
+        sample_num = r["sample_id"].split("_")[-1]
+
+        ax.text(
+            x1 + 0.005,
+            y1 + 0.005,
+            sample_num
+        )
+
+    ax.set_xlabel("Stability")
+    ax.set_ylabel("Brightness")
+    ax.set_title("Affect Trajectories")
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+
+    ax.grid(True)
+
+    output_path = output_dir / "affect_trajectories.png"
+
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+
+    print(f"Saved trajectory plot: {output_path}")
+    return fig
+
+def build_interactive_affect_trajectory_plot(rows):
+    fig = go.Figure()
+
+    for row in rows:
+
+        hover_text = (
+            f"{row['sample_id']}<br>"
+            f"Transition: {row['degree_transition']}<br>"
+            f"Notes: "
+            f"{row['event_1_notes_names']} → "
+            f"{row['event_2_notes_names']}<br>"
+            f"Δ Stability: "
+            f"{row['delta_stability']:.3f}<br>"
+            f"Δ Brightness: "
+            f"{row['delta_brightness']:.3f}"
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[
+                    row["plot_start_x"],
+                    row["plot_end_x"]
+                ],
+                y=[
+                    1 - row["plot_start_y"],
+                    1 - row["plot_end_y"]
+                ],
+                mode="lines",
+                line=dict(
+                    width=1,
+                    color="rgba(160,160,160,0.6)"
+                ),                
+                name=row["sample_id"],
+                hovertemplate=(
+                    f"{hover_text}"
+                    "<extra></extra>"
+                ),
+                
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[row["plot_start_x"]],
+                y=[1 - row["plot_start_y"]],
+                mode="markers",
+                marker=dict(
+                    symbol="circle-open",
+                    size=8,
+                    color="rgba(160,160,160,0.9)"
+                ),
+                name=row["sample_id"],
+                hovertemplate=(
+                    f"{hover_text}"
+                    "<extra></extra>"
+                ),
+                showlegend=False
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[row["plot_end_x"]],
+                y=[1 - row["plot_end_y"]],
+                mode="markers",
+                marker=dict(
+                    symbol="circle",
+                    size=8,
+                    color="rgba(160,160,160,0.9)"
+                ),
+                name=row["sample_id"],
+                hovertemplate=(
+                    f"{hover_text}"
+                    "<extra></extra>"
+                ),
+                showlegend=False
+            )
+        )
+
+    fig.update_layout(
+        title="Affect Trajectories",
+        xaxis_title="Stability",
+        yaxis_title="Brightness",
+        xaxis=dict(range=[0, 1]),
+        yaxis=dict(range=[0, 1]),
+        showlegend=False,
+        height=700
+    )
+
+    return fig
+
+def get_sample_set_id(sample_id):
+    parts = sample_id.split("_")
+    return "_".join(parts[:-1])
+
+def find_sampleset_file(sample_set_id):
+    return SAMPLE_SETS_DIR / f"{sample_set_id}_sampleset.json"
+
+def scan_archive():
+    sample_set_files = list(SAMPLE_SETS_DIR.glob("*_sampleset.json"))
+    mapping_files = list(PARTICIPANT_TRIALS_DIR.glob("*/*/*.json"))
+
+    rows = []
+
+    print("\n=== Archive Scan ===")
+    print(f"Found sample sets: {len(sample_set_files)}")
+    print(f"Found mapping trials: {len(mapping_files)}")
+
+    if VERBOSE:
+        print("\nSample set files:")
+        for path in sample_set_files:
+            print(f"- {path.name}")
+
+        print("\nMapping trials:")
+
+    for path in mapping_files:
+        mapping = load_json(path)
+        trial_meta = mapping["trial_metadata"]
+
+        participant_id = trial_meta.get("participant_id", "UNKNOWN")
+        methodology_id = trial_meta.get("methodology_id", "UNKNOWN")
+        trial_id = trial_meta.get("trial_id", "UNKNOWN")
+
+        sample_set_ids = sorted({
+            get_sample_set_id(obs["sample_id"])
+            for obs in mapping["mapping_observations"]
+        })
+
+        sample_sets_text = ", ".join(sample_set_ids)
+
+        if VERBOSE:
+            print(
+                f"- {participant_id} | "
+                f"{methodology_id} | "
+                f"{trial_id} | "
+                f"sample sets: {sample_sets_text}"
+            )
+
+        for sample_set_id in sample_set_ids:
+            sampleset_path = find_sampleset_file(sample_set_id)
+
+            if VERBOSE:
+                print(f"    -> {sampleset_path.name}")
+
+            if not sampleset_path.exists():
+                if VERBOSE:
+                    print("       MISSING!")
+                continue
+
+            sampleset = load_json(sampleset_path)
+
+            global_settings = sampleset.get(
+                "global_settings",
+                {}
+            )
+
+            temporal_integration_scale = global_settings.get(
+                "temporal_integration_scale",
+                "Unknown"
+            )
+
+            duration_seconds = global_settings.get(
+                "duration_seconds",
+                None
+            )
+
+            temporal_integration_window_seconds = global_settings.get(
+                "temporal_integration_window_seconds",
+                None
+            )
+
+            temporal_integration_scale_description = global_settings.get(
+                "temporal_integration_scale_description",
+                None
+            )            
+
+            sample_count = len(sampleset["samples"])
+
+            if VERBOSE:
+                print(f"       samples: {sample_count}")
+
+            sample_lookup = {
+                sample["sample_id"]: sample
+                for sample in sampleset["samples"]
+            }
+
+            matched_count = 0
+            missing_count = 0
+            printed_example = False
+
+            for obs in mapping["mapping_observations"]:
+                sample_id = obs["sample_id"]
+
+                if sample_id in sample_lookup:
+                    matched_count += 1
+
+                    sample = sample_lookup[sample_id]
+
+                    e1 = sample["events"][0]
+                    e2 = sample["events"][1]
+
+                    numeric_degree_transition = (
+                        f'{e1["scale_degree"]}->{e2["scale_degree"]}'
+                    )
+
+                    roman_transition = (
+                        f'{e1.get("roman_numeral", e1["scale_degree"])}'
+                        f'→'
+                        f'{e2.get("roman_numeral", e2["scale_degree"])}'
+                    )
+
+                    start_stability = 1 - obs["start_x_norm"]
+                    end_stability = 1 - obs["end_x_norm"]
+                    delta_stability = end_stability - start_stability
+
+                    start_brightness = 1 - obs["start_y_norm"]
+                    end_brightness = 1 - obs["end_y_norm"]
+                    delta_brightness = end_brightness - start_brightness
+
+                    plot_start_x = obs["start_x_norm"]
+                    plot_end_x = obs["end_x_norm"]
+
+                    plot_start_y = obs["start_y_norm"]
+                    plot_end_y = obs["end_y_norm"]
+
+                    row = {
+                        "participant_id": participant_id,
+                        "methodology_id": methodology_id,
+                        "trial_id": trial_id,
+                        "sample_set_id": get_sample_set_id(sample_id),
+                        "sample_id": sample_id,
+
+                        "audio_path": str(
+                            AUDIO_DIR
+                            / get_sample_set_id(sample_id)
+                            / f"{sample_id}.wav"
+                        ),                        
+
+                        "degree_transition": roman_transition,
+                        "numeric_degree_transition": numeric_degree_transition,
+
+                        "start_stability": start_stability,
+                        "end_stability": end_stability,
+                        "delta_stability": delta_stability,
+
+                        "start_brightness": start_brightness,
+                        "end_brightness": end_brightness,
+                        "delta_brightness": delta_brightness,
+
+                        "plot_start_x": plot_start_x,
+                        "plot_end_x": plot_end_x,
+                        "plot_start_y": plot_start_y,
+                        "plot_end_y": plot_end_y,
+
+                        "movement_dx": delta_stability,
+                        "movement_dy": delta_brightness,
+
+                        "length_norm": obs["length_norm"],
+                        "angle_deg": obs["angle_deg"],
+
+                        "event_1_notes_midi": e1.get("notes_midi", []),
+                        "event_2_notes_midi": e2.get("notes_midi", []),
+                        "event_1_notes_names": e1.get("notes_names", []),
+                        "event_2_notes_names": e2.get("notes_names", []),
+                        "event_1_inversion": e1.get("inversion"),
+                        "event_2_inversion": e2.get("inversion"),
+                        "event_1_chord_type": e1.get("chord_type"),
+                        "event_2_chord_type": e2.get("chord_type"),
+
+                        "temporal_integration_scale": temporal_integration_scale,
+                        "duration_seconds": duration_seconds,
+                        "temporal_integration_window_seconds": temporal_integration_window_seconds,
+                        "temporal_integration_scale_description": temporal_integration_scale_description,                        
+
+                    }
+
+                    rows.append(row)
+
+                    if VERBOSE and not printed_example:
+                        print("       example joined row:")
+                        print(f"         participant_id: {participant_id}")
+                        print(f"         methodology_id: {methodology_id}")
+                        print(f"         trial_id: {trial_id}")
+                        print(f"         sample_id: {sample_id}")
+                        print(
+                            f"         sample_set_id: "
+                            f"{get_sample_set_id(sample_id)}"
+                        )
+                        print(
+                            f"         degree_transition: "
+                            f"{roman_transition}"
+                        )
+                        print(
+                            f"         length_norm: "
+                            f"{obs['length_norm']:.3f}"
+                        )
+
+                        printed_example = True
+
+                else:
+                    missing_count += 1
+
+                    if VERBOSE:
+                        print(f"       MISSING SAMPLE: {sample_id}")
+
+            total_count = len(mapping["mapping_observations"])
+
+            if VERBOSE:
+                print(
+                    f"       matched samples: "
+                    f"{matched_count}/{total_count}"
+                )
+
+    print(f"\nTotal joined rows: {len(rows)}")
+
+    return rows
+
+def export_joined_rows(rows):
+    if not rows:
+        print("No joined rows to export.")
+        return
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
+    with open(OUTPUT_PATH, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print(f"Saved joined rows: {OUTPUT_PATH}")
+
+def export_transition_summary(rows):
+    transition_rows = build_transition_summary(rows)
+
+    with open(TRANSITION_SUMMARY_PATH, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "degree_transition",
+                "count",
+                "avg_length_norm",
+                "avg_delta_stability",
+                "avg_delta_brightness"
+            ]
+        )
+        writer.writeheader()
+        writer.writerows(transition_rows)
+
+    print(f"Saved transition summary: {TRANSITION_SUMMARY_PATH}")
+
+def apply_filters(rows, filters=FILTERS):
+    print("\n=== Active Filters ===")
+
+    for key, value in filters.items():
+        print(f"{key}: {value}")
+
+    filtered_rows = []
+
+    for row in rows:
+        participant_filter = filters["participant_id"]
+        methodology_filter = filters["methodology_id"]
+        sample_set_filter = filters["sample_set_id"]
+        temporal_scale_filter = filters.get(
+            "temporal_integration_scale"
+        )       
+
+        if participant_filter is not None:
+            if row["participant_id"] != participant_filter:
+                continue
+
+        if methodology_filter is not None:
+            if row["methodology_id"] != methodology_filter:
+                continue
+
+        if sample_set_filter is not None:
+            if isinstance(sample_set_filter, list):
+                if row["sample_set_id"] not in sample_set_filter:
+                    continue
+            else:
+                if row["sample_set_id"] != sample_set_filter:
+                    continue
+
+        if temporal_scale_filter is not None:
+            if row.get("temporal_integration_scale") != temporal_scale_filter:
+                continue
+
+        filtered_rows.append(row)
+
+    print(f"Rows after filtering: {len(filtered_rows)}")
+
+    return filtered_rows
+
+def build_sample_summary(rows):
+    sample_rows = []
+
+    for row in rows:
+        sample_rows.append({
+            "participant_id": row["participant_id"],
+            "methodology_id": row["methodology_id"],
+            "trial_id": row["trial_id"],
+            "sample_set_id": row["sample_set_id"],
+            "sample_id": row["sample_id"],
+            "degree_transition": row["degree_transition"],
+            "length_norm": row["length_norm"],
+            "delta_stability": row["delta_stability"],
+            "delta_brightness": row["delta_brightness"]
+        })
+
+    return sample_rows
+
+def export_sample_summary(rows):
+    sample_rows = build_sample_summary(rows)
+
+    with open(SAMPLE_SUMMARY_PATH, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=list(sample_rows[0].keys())
+        )
+        writer.writeheader()
+        writer.writerows(sample_rows)
+
+    print(f"Saved sample summary: {SAMPLE_SUMMARY_PATH}")
+
+def build_transition_summary(rows):
+    transition_stats = {}
+
+    for row in rows:
+        transition = row["degree_transition"]
+
+        if transition not in transition_stats:
+            transition_stats[transition] = {
+                "count": 0,
+                "total_length": 0,
+                "total_delta_stability": 0,
+                "total_delta_brightness": 0
+            }
+
+        transition_stats[transition]["count"] += 1
+        transition_stats[transition]["total_length"] += row["length_norm"]
+        transition_stats[transition]["total_delta_stability"] += row["delta_stability"]
+        transition_stats[transition]["total_delta_brightness"] += row["delta_brightness"]
+
+    transition_rows = []
+
+    for transition, stats in transition_stats.items():
+        avg_length = stats["total_length"] / stats["count"]
+        avg_delta_stability = stats["total_delta_stability"] / stats["count"]
+        avg_delta_brightness = stats["total_delta_brightness"] / stats["count"]
+
+        transition_rows.append({
+            "degree_transition": transition,
+            "count": stats["count"],
+            "avg_length_norm": round(avg_length, 3),
+            "avg_delta_stability": round(avg_delta_stability, 3),
+            "avg_delta_brightness": round(avg_delta_brightness, 3)
+        })
+
+    transition_rows = sorted(
+        transition_rows,
+        key=lambda row: row["avg_length_norm"],
+        reverse=True
+    )
+    return transition_rows
+
+def move_id_columns_to_end(rows):
+
+    id_columns = [
+        "participant_id",
+        "methodology_id",
+        "trial_id",
+        "sample_set_id",
+        "sample_id"
+    ]
+
+    display_rows = []
+
+    for row in rows:
+
+        new_row = {}
+
+        for key, value in row.items():
+            if key not in id_columns:
+                new_row[key] = value
+
+        for key in id_columns:
+            if key in row:
+                new_row[key] = row[key]
+
+        display_rows.append(new_row)
+
+    return display_rows
+
+def make_compact_sample_table(rows):
+    compact_rows = []
+
+    for row in rows:
+        compact_rows.append({
+            "degree_transition": row["degree_transition"],
+            "notes": (
+                f"{row.get('event_1_notes_names')} → "
+                f"{row.get('event_2_notes_names')}"
+            ),
+            "length_norm": row["length_norm"],
+            "delta_stability": row["delta_stability"],
+            "delta_brightness": row["delta_brightness"],
+            "chord_type": (
+                f"{row.get('event_1_chord_type')} → "
+                f"{row.get('event_2_chord_type')}"
+            ),
+            "inversion": (
+                f"{row.get('event_1_inversion')} → "
+                f"{row.get('event_2_inversion')}"
+            ),
+            "sample_id": row["sample_id"]
+        })
+
+    return compact_rows
+
+
+def build_ranked_sample_table(
+    rows,
+    metric_key,
+    ranking_mode,
+    limit
+):
+    ranked_rows = []
+
+    for row in rows:
+        value = row[metric_key]
+
+        ranked_rows.append({
+            **row,
+            "ranking_value": value,
+            "ranking_abs_value": abs(value)
+        })
+
+    if ranking_mode == "Highest Values":
+        ranked_rows = sorted(
+            ranked_rows,
+            key=lambda row: row["ranking_value"],
+            reverse=True
+        )
+
+    elif ranking_mode == "Lowest Values":
+        ranked_rows = sorted(
+            ranked_rows,
+            key=lambda row: row["ranking_value"]
+        )
+
+    elif ranking_mode == "Absolute Magnitude":
+        ranked_rows = sorted(
+            ranked_rows,
+            key=lambda row: row["ranking_abs_value"],
+            reverse=True
+        )
+
+    ranked_rows = ranked_rows[:limit]
+
+    compact_rows = []
+
+    for row in ranked_rows:
+        compact_rows.append({
+            "degree_transition": row["degree_transition"],
+            "ranking_value": round(
+                row["ranking_value"],
+                3
+            ),
+            "length_norm": round(
+                row["length_norm"],
+                3
+            ),
+            "delta_stability": round(
+                row["delta_stability"],
+                3
+            ),
+            "delta_brightness": round(
+                row["delta_brightness"],
+                3
+            ),
+            "movement_dx": round(
+                row["movement_dx"],
+                3
+            ),
+            "movement_dy": round(
+                row["movement_dy"],
+                3
+            ),
+            "chord_type": (
+                f"{row.get('event_1_chord_type')} → "
+                f"{row.get('event_2_chord_type')}"
+            ),
+            "inversion": (
+                f"{row.get('event_1_inversion')} → "
+                f"{row.get('event_2_inversion')}"
+            ),
+            "sample_id": row["sample_id"]
+        })
+
+    return compact_rows
+
+
+def compute_trajectory_distance(row_a, row_b):
+    start_dx = row_a["start_stability"] - row_b["start_stability"]
+    start_dy = row_a["start_brightness"] - row_b["start_brightness"]
+
+    end_dx = row_a["end_stability"] - row_b["end_stability"]
+    end_dy = row_a["end_brightness"] - row_b["end_brightness"]
+
+    start_distance = (start_dx ** 2 + start_dy ** 2) ** 0.5
+    end_distance = (end_dx ** 2 + end_dy ** 2) ** 0.5
+
+    return (start_distance + end_distance) / 2
+
+
+def build_distance_matrix(rows):
+    matrix = []
+
+    for row_a in rows:
+        matrix_row = []
+
+        for row_b in rows:
+            distance = compute_trajectory_distance(
+                row_a,
+                row_b
+            )
+
+            matrix_row.append(distance)
+
+        matrix.append(matrix_row)
+
+    return matrix
+
+
+def build_topology_embedding(
+    rows,
+    n_components=2
+):
+    if len(rows) < 2:
+        return []
+
+    distance_matrix = build_distance_matrix(rows)
+
+    mds = MDS(
+        n_components=n_components,
+        dissimilarity="precomputed",
+        random_state=42
+    )
+
+    coords = mds.fit_transform(distance_matrix)
+
+    stress = mds.stress_
+
+    topology_rows = []
+
+    for row, coord in zip(rows, coords):
+        topology_rows.append({
+            **row,
+            "topo_x": coord[0],
+            "topo_y": coord[1]
+        })
+
+    return topology_rows, stress
+
+def project_points_onto_axis(
+    topology_rows,
+    angle_deg
+):
+    theta = math.radians(angle_deg)
+
+    ux = math.cos(theta)
+    uy = math.sin(theta)
+
+    projected_rows = []
+
+    for row in topology_rows:
+
+        position = (
+            row["topo_x"] * ux +
+            row["topo_y"] * uy
+        )
+
+        projected_rows.append({
+            **row,
+            "axis_position": position
+        })
+
+    return projected_rows
+
+
+def safe_correlation(values_a, values_b):
+    if len(values_a) < 2:
+        return None
+
+    if np.std(values_a) == 0:
+        return None
+
+    if np.std(values_b) == 0:
+        return None
+
+    return float(
+        np.corrcoef(values_a, values_b)[0, 1]
+    )
+
+
+def compute_axis_correlations(
+    topology_rows,
+    angle_deg
+):
+    projected_rows = project_points_onto_axis(
+        topology_rows,
+        angle_deg
+    )
+
+    axis_positions = [
+        row["axis_position"]
+        for row in projected_rows
+    ]
+
+    variables = {
+        "delta_brightness": [
+            row["delta_brightness"]
+            for row in projected_rows
+        ],
+        "delta_stability": [
+            row["delta_stability"]
+            for row in projected_rows
+        ],
+        "length_norm": [
+            row["length_norm"]
+            for row in projected_rows
+        ],
+    }
+
+    correlation_rows = []
+
+    for variable_name, values in variables.items():
+
+        correlation = safe_correlation(
+            axis_positions,
+            values
+        )
+
+        correlation_rows.append({
+            "variable": variable_name,
+            "correlation": (
+                None
+                if correlation is None
+                else round(correlation, 3)
+            ),
+            "abs_correlation": (
+                None
+                if correlation is None
+                else round(abs(correlation), 3)
+            )
+        })
+
+    correlation_rows = sorted(
+        correlation_rows,
+        key=lambda row: (
+            -1
+            if row["abs_correlation"] is None
+            else row["abs_correlation"]
+        ),
+        reverse=True
+    )
+
+    return correlation_rows
+
+
+def build_axis_correlation_curve(
+    topology_rows,
+    angle_step=1
+):
+    angle_rows = []
+
+    for angle in range(0, 181, angle_step):
+
+        correlation_rows = compute_axis_correlations(
+            topology_rows,
+            angle
+        )
+
+        row = {
+            "angle": angle
+        }
+
+        for correlation_row in correlation_rows:
+            variable = correlation_row["variable"]
+            correlation = correlation_row["correlation"]
+
+            row[variable] = correlation
+
+        angle_rows.append(row)
+
+    return angle_rows
+
+def build_axis_correlation_curve_plot(
+    topology_rows,
+    use_absolute=True
+):
+    angle_rows = build_axis_correlation_curve(
+        topology_rows
+    )
+
+    fig = go.Figure()
+
+    variables = [
+        "delta_brightness",
+        "delta_stability",
+        "length_norm"
+    ]
+
+    for variable in variables:
+
+        y_values = []
+
+        for row in angle_rows:
+            value = row[variable]
+
+            if value is None:
+                y_values.append(None)
+            elif use_absolute:
+                y_values.append(abs(value))
+            else:
+                y_values.append(value)
+
+        fig.add_trace(
+            go.Scatter(
+                x=[
+                    row["angle"]
+                    for row in angle_rows
+                ],
+                y=y_values,
+                mode="lines",
+                name=variable
+            )
+        )
+
+    title = (
+        "Axis Correlation by Angle (Absolute)"
+        if use_absolute
+        else "Axis Correlation by Angle (Signed)"
+    )
+
+    yaxis_range = (
+        [0, 1]
+        if use_absolute
+        else [-1, 1]
+    )
+
+    fig.update_layout(
+        title=title,
+        xaxis_title="Axis Angle",
+        yaxis_title=(
+            "Absolute Correlation"
+            if use_absolute
+            else "Correlation"
+        ),
+        height=450,
+        yaxis=dict(
+            range=yaxis_range
+        )
+    )
+
+    return fig
+
+def build_latent_axis_point_cloud_plot(
+    topology_rows,
+    angle_deg
+):
+    fig = go.Figure()
+
+    x_values = [
+        row["topo_x"]
+        for row in topology_rows
+    ]
+
+    y_values = [
+        row["topo_y"]
+        for row in topology_rows
+    ]
+
+    max_extent = max(
+        max(abs(x) for x in x_values),
+        max(abs(y) for y in y_values)
+    )
+
+    axis_limit = 0.7
+
+    theta = math.radians(angle_deg)
+
+    ux = math.cos(theta)
+    uy = math.sin(theta)
+
+    line_length = axis_limit
+
+    fig.add_trace(
+        go.Scatter(
+            x=[None],
+            y=[None],
+            mode="markers",
+            marker=dict(
+                size=9,
+                color="rgba(0,0,0,0)"
+            ),
+            name=" ",
+            hoverinfo="skip",
+            showlegend=True,
+            visible="legendonly"
+        )
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=-line_length * ux,
+        y0=-line_length * uy,
+        x1= line_length * ux,
+        y1= line_length * uy,
+        line=dict(
+            color="rgba(86,172,184,0.9)",
+            width=2
+        )
+    )
+
+
+    point_x = []
+    point_y = []
+    hover_texts = []
+    sample_ids = []
+
+    for row in topology_rows:
+        point_x.append(row["topo_x"])
+        point_y.append(row["topo_y"])
+        sample_ids.append(row["sample_id"])
+
+        hover_texts.append(
+            f"{row['sample_id']}<br>"
+            f"Transition: {row['degree_transition']}<br>"
+            f"Length: {row['length_norm']:.3f}<br>"
+            f"Δ Stability: {row['delta_stability']:.3f}<br>"
+            f"Δ Brightness: {row['delta_brightness']:.3f}"
+        )
+
+    fig.add_trace(
+        go.Scatter(
+            x=point_x,
+            y=point_y,
+            mode="markers",
+            marker=dict(
+                size=9,
+                color="rgba(160,160,160,0.9)"
+            ),
+            customdata=sample_ids,
+            hovertext=hover_texts,
+            hovertemplate="%{hovertext}<extra></extra>",
+            showlegend=False
+        )
+    )
+
+    fig.update_layout(
+        xaxis_title="Embedding Coordinate A",
+        yaxis_title="Embedding Coordinate B",
+        height=500,
+        showlegend=True,
+        plot_bgcolor="#0a0a0a",
+        paper_bgcolor="#0a0a0a",     
+        margin=dict(
+            l=60,
+            r=20,
+            t=40,
+            b=60
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            itemclick=False,
+            itemdoubleclick=False,
+        )
+    )
+
+
+    fig.update_xaxes(
+        range=[-axis_limit, axis_limit],
+        showgrid=True,
+        gridcolor="#2b2f3a",
+        zeroline=False,
+        fixedrange=True
+    )
+
+    fig.update_yaxes(
+        range=[-axis_limit, axis_limit],
+        showgrid=True,
+        gridcolor="#2b2f3a",
+        zeroline=False,
+        scaleanchor="x",
+        scaleratio=1,
+        fixedrange=True
+    )
+
+    fig.update_layout(
+        template="plotly_dark",
+        plot_bgcolor="#0a0a0a",
+        paper_bgcolor="#0a0a0a",
+        hoverlabel=dict(
+            bgcolor="#151515",
+            font_color="#d0d0d0",
+            bordercolor="#444444"
+        )
+    )
+
+    fig.update_xaxes(
+        gridcolor="#2b2f3a",
+        linecolor="#2b2f3a",
+    )
+
+    fig.update_yaxes(
+        gridcolor="#2b2f3a",
+        linecolor="#2b2f3a",
+    )
+
+    fig = apply_topology_plot_theme(fig)
+
+    return fig
+
+def build_topology_point_cloud_plot(rows):
+    topology_rows = build_topology_embedding(rows)
+
+    fig = go.Figure()
+
+    for row in topology_rows:
+
+        hover_text = (
+            f"{row['sample_id']}<br>"
+            f"Transition: {row['degree_transition']}<br>"
+            f"Notes: "
+            f"{row['event_1_notes_names']} → "
+            f"{row['event_2_notes_names']}<br>"
+            f"Length: {row['length_norm']:.3f}<br>"
+            f"Δ Stability: {row['delta_stability']:.3f}<br>"
+            f"Δ Brightness: {row['delta_brightness']:.3f}"
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[row["topo_x"]],
+                y=[row["topo_y"]],
+                mode="markers",
+                marker=dict(
+                    size=10,
+                    color="rgba(160,160,160,0.9)"
+                ),
+                hovertemplate=(
+                    hover_text
+                    + "<extra></extra>"
+                ),
+                showlegend=False
+            )
+        )
+
+    fig.update_layout(
+        title="Topology Point Cloud",
+        xaxis_title="Topology Dimension 1",
+        yaxis_title="Topology Dimension 2",
+        font=dict(
+            family="Arial, Helvetica, sans-serif",
+            size=8,
+            color="#d0d0d0"
+        ),
+        xaxis_title_font=dict(size=10),
+        yaxis_title_font=dict(size=10),
+        legend_font=dict(size=8),        
+        height=500,
+        showlegend=False
+    )
+
+    fig.update_xaxes(
+        tickfont=dict(size=8),
+        title_font=dict(size=10)
+    )
+
+    fig.update_yaxes(
+        tickfont=dict(size=8),
+        title_font=dict(size=10)
+    )
+
+    fig.update_xaxes(
+        showgrid=True,
+        zeroline=False
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        zeroline=False,
+        scaleanchor="x",
+        scaleratio=1
+    )
+
+    fig = apply_topology_plot_theme(fig)
+
+    return fig
+
+def find_best_axis_angles(
+    topology_rows,
+    angle_step=1
+):
+    angle_rows = build_axis_correlation_curve(
+        topology_rows,
+        angle_step
+    )
+
+    variables = [
+        "delta_brightness",
+        "delta_stability",
+        "length_norm"
+    ]
+
+    best_rows = []
+
+    for variable in variables:
+
+        best_angle = None
+        best_correlation = None
+        best_abs_correlation = -1
+
+        for row in angle_rows:
+            correlation = row.get(variable)
+
+            if correlation is None:
+                continue
+
+            abs_correlation = abs(correlation)
+
+            if abs_correlation > best_abs_correlation:
+                best_abs_correlation = abs_correlation
+                best_correlation = correlation
+                best_angle = row["angle"]
+
+        best_rows.append({
+            "variable": variable,
+            "best_angle": best_angle,
+            "correlation": best_correlation,
+            "abs_correlation": round(best_abs_correlation, 3)
+        })
+
+    return best_rows
+
+def build_clustered_topology_plot(
+    topology_rows
+):
+    fig = go.Figure()
+
+    group_ids = sorted(
+        set(row["group_id"] for row in topology_rows)
+    )
+
+    for group_id in group_ids:
+
+        group_rows = [
+            row for row in topology_rows
+            if row["group_id"] == group_id
+        ]
+
+        x_values = [
+            row["topo_x"]
+            for row in group_rows
+        ]
+
+        y_values = [
+            row["topo_y"]
+            for row in group_rows
+        ]
+
+        text_values = [
+            row["sample_id"].split("_")[-1]
+            for row in group_rows
+        ]
+
+        hover_values = []
+
+        for row in group_rows:
+            hover_values.append(
+                f"{row['sample_id']}<br>"
+                f"{row['group_id']}<br>"
+                f"Group size: {row['group_size']}<br>"
+                f"Transition: {row['degree_transition']}<br>"
+                f"Length: {row['length_norm']:.3f}<br>"
+                f"Δ Stability: {row['delta_stability']:.3f}<br>"
+                f"Δ Brightness: {row['delta_brightness']:.3f}"
+            )
+
+        marker_style = dict(
+            size=10
+        )
+
+        if group_id == "Ungrouped":
+            marker_style = dict(
+                size=8,
+                color="rgba(120,120,120,0.55)"
+            )
+
+        fig.add_trace(
+            go.Scatter(
+                x=x_values,
+                y=y_values,
+                mode="markers",
+                marker=marker_style,
+                name=group_id,
+                hovertext=hover_values,
+                hovertemplate="%{hovertext}<extra></extra>"
+            )
+        )
+
+    x_all = [
+        row["topo_x"]
+        for row in topology_rows
+    ]
+
+    y_all = [
+        row["topo_y"]
+        for row in topology_rows
+    ]
+
+    max_extent = max(
+        max(abs(x) for x in x_all),
+        max(abs(y) for y in y_all)
+    )
+
+    axis_limit = 0.7
+
+    fig.update_layout(
+        xaxis_title="Embedding Coordinate A",
+        yaxis_title="Embedding Coordinate B",
+        height=500,
+        showlegend=True,
+        margin=dict(
+            l=60,
+            r=20,
+            t=40,
+            b=60
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        )
+    )
+
+    fig.update_xaxes(
+        range=[-axis_limit, axis_limit],
+        showgrid=True,
+        zeroline=False,
+        fixedrange=True
+    )
+
+    fig.update_yaxes(
+        range=[-axis_limit, axis_limit],
+        showgrid=True,
+        zeroline=False,
+        scaleanchor="x",
+        scaleratio=1,
+        fixedrange=True
+    )
+
+    fig = apply_topology_plot_theme(fig)
+
+    return fig
+
+
+def build_proximity_groups(rows, max_distance):
+    groups = []
+    used_sample_ids = set()
+
+    for row in rows:
+        sample_id = row["sample_id"]
+
+        if sample_id in used_sample_ids:
+            continue
+
+        group = [row]
+        used_sample_ids.add(sample_id)
+
+        for other_row in rows:
+            other_sample_id = other_row["sample_id"]
+
+            if other_sample_id in used_sample_ids:
+                continue
+
+            distance = compute_trajectory_distance(
+                row,
+                other_row
+            )
+
+            if distance <= max_distance:
+                group.append(other_row)
+                used_sample_ids.add(other_sample_id)
+
+        groups.append(group)
+
+    return groups
+
+def assign_proximity_group_ids(
+    rows,
+    max_distance
+):
+    groups = build_proximity_groups(
+        rows,
+        max_distance
+    )
+
+    grouped_rows = []
+
+    group_counter = 1
+
+    for group in groups:
+
+        if len(group) == 1:
+            group_id = "Ungrouped"
+        else:
+            group_id = f"Group {group_counter}"
+            group_counter += 1
+
+        for row in group:
+            grouped_rows.append({
+                **row,
+                "group_id": group_id,
+                "group_size": len(group)
+            })
+
+    return grouped_rows
+
+
+def compute_topology_distance(row_a, row_b):
+    dx = row_a["topo_x"] - row_b["topo_x"]
+    dy = row_a["topo_y"] - row_b["topo_y"]
+
+    return (dx ** 2 + dy ** 2) ** 0.5
+
+
+def assign_topology_group_ids(
+    topology_rows,
+    max_distance
+):
+    visited_sample_ids = set()
+    grouped_rows = []
+    group_counter = 1
+
+    row_lookup = {
+        row["sample_id"]: row
+        for row in topology_rows
+    }
+
+    neighbors = {
+        row["sample_id"]: []
+        for row in topology_rows
+    }
+
+    for i in range(len(topology_rows)):
+        for j in range(i + 1, len(topology_rows)):
+
+            row_a = topology_rows[i]
+            row_b = topology_rows[j]
+
+            distance = compute_topology_distance(
+                row_a,
+                row_b
+            )
+
+            if distance <= max_distance:
+                neighbors[row_a["sample_id"]].append(
+                    row_b["sample_id"]
+                )
+                neighbors[row_b["sample_id"]].append(
+                    row_a["sample_id"]
+                )
+
+    for row in topology_rows:
+        sample_id = row["sample_id"]
+
+        if sample_id in visited_sample_ids:
+            continue
+
+        stack = [sample_id]
+        component_ids = []
+
+        while stack:
+            current_id = stack.pop()
+
+            if current_id in visited_sample_ids:
+                continue
+
+            visited_sample_ids.add(current_id)
+            component_ids.append(current_id)
+
+            for neighbor_id in neighbors[current_id]:
+                if neighbor_id not in visited_sample_ids:
+                    stack.append(neighbor_id)
+
+        if len(component_ids) == 1:
+            group_id = "Ungrouped"
+        else:
+            group_id = f"Group {group_counter}"
+            group_counter += 1
+
+        group_size = len(component_ids)
+
+        for component_id in component_ids:
+            grouped_rows.append({
+                **row_lookup[component_id],
+                "group_id": group_id,
+                "group_size": group_size
+            })
+
+    return grouped_rows
+
+
+def get_topology_fidelity(stress):
+    if stress < 0.05:
+        return "Excellent"
+
+    elif stress < 0.10:
+        return "Good"
+
+    elif stress < 0.20:
+        return "Moderate"
+
+    else:
+        return "Poor"
+
+def find_most_similar_pair(rows):
+
+    best_distance = float("inf")
+    best_pair = None
+
+    for i in range(len(rows)):
+        for j in range(i + 1, len(rows)):
+
+            distance = compute_trajectory_distance(
+                rows[i],
+                rows[j]
+            )
+
+            if distance < best_distance:
+                best_distance = distance
+
+                best_pair = (
+                    rows[i]["sample_id"],
+                    rows[j]["sample_id"]
+                )
+
+    return {
+        "sample_a": best_pair[0],
+        "sample_b": best_pair[1],
+        "distance": round(best_distance, 4)
+    }
+
+def main():
+    rows = scan_archive()
+
+    filtered_rows = apply_filters(rows)
+
+    export_transition_summary(filtered_rows)
+    export_joined_rows(filtered_rows)
+    export_sample_summary(filtered_rows)
+
+    plot_affect_trajectories(
+        filtered_rows,
+        OUTPUT_DIR
+    )
+
+    print(
+        f"\nRows returned to main: "
+        f"{len(filtered_rows)}"
+    )
+
+    return
+
+
+if __name__ == "__main__":
+    main()

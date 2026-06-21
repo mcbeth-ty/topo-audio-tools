@@ -1,0 +1,5 @@
+degree_transition,count,avg_length_norm,avg_delta_stability,avg_delta_brightness
+6->5,1,0.339,0.282,-0.421
+1->1,1,0.244,-0.285,0.146
+6->7,2,0.144,-0.015,-0.238
+3->4,1,0.079,-0.056,0.109
