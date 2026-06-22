@@ -4,7 +4,7 @@ import os
 import streamlit as st
 import pretty_midi
 import random
-from midi_generator import generate_sequences, build_probability_field
+from midi_generator import generate_sequences
 import textwrap
 import numpy as np
 import wave
@@ -285,44 +285,7 @@ div[data-baseweb="slider"] {
 audio {
     height: 28px !important;
     width: 120px !important;
-}
-
-:root {
-    --topo-cyan: #59d8ff;
-}
-
-.diatonic-label {
-    color: #59d8ff !important;
-    font-weight: 500 !important;
-}
-
-.diatonic-chip {
-    color: #59d8ff !important;
-    border: 1px solid #245767;
-    background: rgba(89, 216, 255, 0.07);
-    padding: 1px 4px;
-    margin-right: 4px;
-    display: inline-block;
-    margin-bottom: 3px;
-}
-
-.field-chip {
-    color: #b8b8b8 !important;
-    border: 1px solid #333333;
-    padding: 1px 4px;
-    margin-right: 4px;
-    display: inline-block;
-    margin-bottom: 3px;
-}
-
-.event-role-diatonic {
-    color: #59d8ff !important;
-}
-
-.event-label-diatonic {
-    color: #59d8ff !important;
-    font-weight: 500 !important;
-}
+}            
             
 </style>
 """, unsafe_allow_html=True)
@@ -333,14 +296,14 @@ st.set_page_config(
 )
 
 st.title("Harmonic Sequence Generator")
-st.caption("V2 probability-field prototype")
+st.caption("V1 interface test")
 
-def compact_slider(label, min_val, max_val, default, key=None, label_class="compact-label"):
+def compact_slider(label, min_val, max_val, default):
     col1, col2 = st.columns([1, 2.2])
 
     with col1:
         st.markdown(
-            f"<div class='{label_class}'>{label}</div>",
+            f"<div class='compact-label'>{label}</div>",
             unsafe_allow_html=True
         )
 
@@ -350,7 +313,6 @@ def compact_slider(label, min_val, max_val, default, key=None, label_class="comp
             min_val,
             max_val,
             default,
-            key=key,
             label_visibility="collapsed"
         )
 
@@ -376,42 +338,6 @@ def compact_selectbox(label, options, default_index=0):
 
     return value
 
-
-
-MAJOR_DIATONIC_DEFAULTS = {
-    "I": 95,
-    "ii": 85,
-    "iii": 75,
-    "IV": 90,
-    "V": 95,
-    "vi": 85,
-    "vii°": 65,
-}
-
-MINOR_DIATONIC_DEFAULTS = {
-    "i": 95,
-    "ii°": 65,
-    "♭III": 95,
-    "iv": 85,
-    "v": 85,
-    "♭VI": 95,
-    "♭VII": 95,
-}
-
-
-def render_label_chips(items, diatonic_set=None, max_items=None):
-    diatonic_set = diatonic_set or set()
-    visible_items = items[:max_items] if max_items else items
-    html_parts = []
-
-    for item in visible_items:
-        chip_class = "diatonic-chip" if item in diatonic_set else "field-chip"
-        html_parts.append(f"<span class='{chip_class}'>{item}</span>")
-
-    if max_items and len(items) > max_items:
-        html_parts.append("<span class='field-chip'>...</span>")
-
-    return "".join(html_parts)
 
 def midi_to_freq(midi_note):
     return 440.0 * (2 ** ((midi_note - 69) / 12))
@@ -592,79 +518,25 @@ with st.sidebar:
 
     chord_type_weights = [dyad_weight, triad_weight]
 
-    st.subheader("HARMONIC FIELD WEIGHTS")
+    st.subheader("SCALE DEGREE WEIGHTS")
 
-    diatonic_weight = compact_slider("DIATONIC", 0, 100, 100, label_class="compact-label diatonic-label")
+    degree_1_weight = compact_slider("1", 0, 100, 20)
+    degree_2_weight = compact_slider("2", 0, 100, 15)
+    degree_3_weight = compact_slider("3", 0, 100, 10)
+    degree_4_weight = compact_slider("4", 0, 100, 20)
+    degree_5_weight = compact_slider("5", 0, 100, 20)
+    degree_6_weight = compact_slider("6", 0, 100, 20)
+    degree_7_weight = compact_slider("7", 0, 100, 5)
 
-    if mode == "major":
-        diatonic_defaults = MAJOR_DIATONIC_DEFAULTS
-    else:
-        diatonic_defaults = MINOR_DIATONIC_DEFAULTS
-
-    diatonic_object_weights = {}
-
-    st.markdown(
-        "<div style='font-size:8px; color:#777; margin-top:8px;'>DIATONIC OBJECT WEIGHTS</div>",
-        unsafe_allow_html=True
-    )
-
-    st.write("")
-    st.write("")
-
-    for roman_label, default_weight in diatonic_defaults.items():
-        diatonic_object_weights[roman_label] = compact_slider(
-            roman_label,
-            0,
-            100,
-            default_weight,
-            key=f"diatonic_{mode}_{roman_label}",
-            label_class="compact-label diatonic-label",
-        )
-
-    parallel_borrowing_weight = compact_slider("PARALLEL BORROWING", 0, 100, 0)
-    uncommon_1_weight = compact_slider("UNCOMMON 1", 0, 100, 0)
-    uncommon_2_weight = compact_slider("UNCOMMON 2", 0, 100, 0)
-
-    preview_field = build_probability_field(
-        modal_preset=mode,
-        diatonic_weight=diatonic_weight,
-        parallel_borrowing_weight=parallel_borrowing_weight,
-        uncommon_1_weight=uncommon_1_weight,
-        uncommon_2_weight=uncommon_2_weight,
-        diatonic_object_weights=diatonic_object_weights,
-    )
-
-    active_preview_labels = [
-        item["roman_numeral"]
-        for item in preview_field
-        if item["weight"] > 0
+    scale_degree_weights = [
+        degree_1_weight,
+        degree_2_weight,
+        degree_3_weight,
+        degree_4_weight,
+        degree_5_weight,
+        degree_6_weight,
+        degree_7_weight
     ]
-
-    active_diatonic_labels = [
-        item["roman_numeral"]
-        for item in preview_field
-        if item["weight"] > 0 and item["active_role"] == "diatonic"
-    ]
-
-    st.markdown(
-        f"""
-        <div style="
-            border: 1px solid #2a2a2a;
-            padding: 8px;
-            margin-top: 12px;
-            margin-bottom: 16px;
-            line-height: 1.4;
-        ">
-            <div style="font-size:8px; color:#777;">ACTIVE HARMONIC OBJECTS</div>
-            <div>{len(active_preview_labels)} / 48</div>
-            <div style="font-size:8px; color:#777; margin-top:6px;">DIATONIC LABELS</div>
-            <div>{render_label_chips(active_diatonic_labels, set(active_diatonic_labels))}</div>
-            <div style="font-size:8px; color:#777; margin-top:6px;">ACTIVE LABELS</div>
-            <div>{render_label_chips(active_preview_labels, set(active_diatonic_labels), max_items=18)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
     st.subheader("INVERSION WEIGHTS")
 
@@ -761,12 +633,8 @@ if generate:
         mode=mode,
         register_low=register_low,
         register_high=register_high,
+        scale_degree_weights=scale_degree_weights,
         chord_type_weights=chord_type_weights,
-        diatonic_weight=diatonic_weight,
-        parallel_borrowing_weight=parallel_borrowing_weight,
-        uncommon_1_weight=uncommon_1_weight,
-        uncommon_2_weight=uncommon_2_weight,
-        diatonic_object_weights=diatonic_object_weights,
         inversion_weights=inversion_weights,
         run_name=run_name,
         bpm=bpm
@@ -875,16 +743,11 @@ if "run_metadata" in st.session_state:
             events_html = ""
 
             for event in sample["events"]:
-                role_class = "event-role-diatonic" if event.get("active_role") == "diatonic" else ""
-                label_class = "event-label-diatonic" if event.get("active_role") == "diatonic" else ""
                 events_html += f"""
                 <div class="event-block">
                     <div class="event-title">EVENT {event["event_index"] + 1}</div>
-                    <div>LABEL: <span class="{label_class}">{event.get("display_label", event.get("roman_numeral", ""))}</span></div>
-                    <div>SOURCE: <span class="{label_class}">{event.get("intended_roman_numeral", event.get("roman_numeral", ""))}</span></div>
-                    <div>ROLE: <span class="{role_class}">{event.get("active_role", "")}</span></div>
+                    <div>DEG: {event["roman_numeral"]}</div>
                     <div>TYPE: {event["chord_type"]}</div>
-                    <div>SOUND: {event.get("sounded_quality_label", "")}</div>
                     <div>INV: {event["inversion"]}</div>
                     <div>NOTES: {", ".join(event["notes_names"])}</div>
                     <div>MIDI: {event["notes_midi"]}</div>
