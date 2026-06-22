@@ -290,7 +290,12 @@ audio {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("Parametric Chord Progression MIDI Generator")
+st.set_page_config(
+    page_title="Harmonic Sequence Generator",
+    layout="wide"
+)
+
+st.title("Harmonic Sequence Generator")
 st.caption("V1 interface test")
 
 def compact_slider(label, min_val, max_val, default):
@@ -458,11 +463,11 @@ with st.sidebar:
     
     st.subheader("HARMONIC SEQUENCE SETTINGS")
     
-    sequence_count = compact_slider("SEQUENCES", 1, 50, 5)
+    sequence_count = compact_slider("SEQUENCES", 1, 50, 6)
     beats_per_bar = compact_slider("BEATS PER BAR", 1, 8, 4)
     bars = compact_slider("BARS", 1, 8, 2)
     harmonic_events = compact_slider("HARMONIC EVENTS", 1, 8, 2)
-    bpm = compact_slider("BPM", 40, 200, 90)
+    bpm = compact_slider("BPM", 40, 200, 120)
 
     preview_total_beats = beats_per_bar * bars
     preview_duration_seconds = preview_total_beats * (60 / bpm)

@@ -1,0 +1,435 @@
+{
+    "generator_version": "v1",
+    "created_at": "2026-06-21T17:15:56.744943",
+    "run_name": "260621_17_15_C#m_2HE",
+    "global_settings": {
+        "mode": "minor",
+        "tonic_midi": 61,
+        "harmonic_events": 2,
+        "bars": 2,
+        "beats_per_bar": 4,
+        "bpm": 120,
+        "duration_beats": 8,
+        "duration_seconds": 4.0,
+        "temporal_integration_scale": "Local Scale",
+        "temporal_integration_window_seconds": [
+            3,
+            10
+        ],
+        "temporal_integration_scale_description": "Short perceptual trajectories and simple affective contours.",
+        "register_low": 48,
+        "register_high": 66,
+        "scale_name": "minor",
+        "scale_intervals": [
+            0,
+            2,
+            3,
+            5,
+            7,
+            8,
+            10
+        ]
+    },
+    "samples": [
+        {
+            "sample_id": "260621_17_15_C#m_2HE_01",
+            "midi_file": null,
+            "audio_file": "260621_17_15_C#m_2HE_01.wav",
+            "sequence_index": 0,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 7,
+                    "roman_numeral": "VII",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "root",
+                    "notes_midi": [
+                        59,
+                        63,
+                        66
+                    ],
+                    "notes_names": [
+                        "B3",
+                        "D#4",
+                        "F#4"
+                    ],
+                    "bass_note_midi": 59,
+                    "bass_note_name": "B3",
+                    "root_note_midi": 59,
+                    "root_note_name": "B3",
+                    "voicing_span_semitones": 7
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 1,
+                    "roman_numeral": "i",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "first",
+                    "notes_midi": [
+                        64,
+                        68,
+                        73
+                    ],
+                    "notes_names": [
+                        "E4",
+                        "G#4",
+                        "C#5"
+                    ],
+                    "bass_note_midi": 64,
+                    "bass_note_name": "E4",
+                    "root_note_midi": 61,
+                    "root_note_name": "C#4",
+                    "voicing_span_semitones": 9
+                }
+            ],
+            "scale_degree_sequence": [
+                7,
+                1
+            ],
+            "roman_numeral_sequence": [
+                "VII",
+                "i"
+            ]
+        },
+        {
+            "sample_id": "260621_17_15_C#m_2HE_02",
+            "midi_file": null,
+            "audio_file": "260621_17_15_C#m_2HE_02.wav",
+            "sequence_index": 1,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 1,
+                    "roman_numeral": "i",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "second",
+                    "notes_midi": [
+                        68,
+                        73,
+                        76
+                    ],
+                    "notes_names": [
+                        "G#4",
+                        "C#5",
+                        "E5"
+                    ],
+                    "bass_note_midi": 68,
+                    "bass_note_name": "G#4",
+                    "root_note_midi": 61,
+                    "root_note_name": "C#4",
+                    "voicing_span_semitones": 8
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 3,
+                    "roman_numeral": "III",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "second",
+                    "notes_midi": [
+                        71,
+                        76,
+                        80
+                    ],
+                    "notes_names": [
+                        "B4",
+                        "E5",
+                        "G#5"
+                    ],
+                    "bass_note_midi": 71,
+                    "bass_note_name": "B4",
+                    "root_note_midi": 64,
+                    "root_note_name": "E4",
+                    "voicing_span_semitones": 9
+                }
+            ],
+            "scale_degree_sequence": [
+                1,
+                3
+            ],
+            "roman_numeral_sequence": [
+                "i",
+                "III"
+            ]
+        },
+        {
+            "sample_id": "260621_17_15_C#m_2HE_03",
+            "midi_file": null,
+            "audio_file": "260621_17_15_C#m_2HE_03.wav",
+            "sequence_index": 2,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 2,
+                    "roman_numeral": "ii\u00b0(dyad)",
+                    "chord_type": "dyad",
+                    "dyad_type": "fifth",
+                    "inversion": "none",
+                    "notes_midi": [
+                        51,
+                        57
+                    ],
+                    "notes_names": [
+                        "D#3",
+                        "A3"
+                    ],
+                    "bass_note_midi": 51,
+                    "bass_note_name": "D#3",
+                    "root_note_midi": 51,
+                    "root_note_name": "D#3",
+                    "voicing_span_semitones": 6
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 5,
+                    "roman_numeral": "v(dyad)",
+                    "chord_type": "dyad",
+                    "dyad_type": "fifth",
+                    "inversion": "none",
+                    "notes_midi": [
+                        56,
+                        63
+                    ],
+                    "notes_names": [
+                        "G#3",
+                        "D#4"
+                    ],
+                    "bass_note_midi": 56,
+                    "bass_note_name": "G#3",
+                    "root_note_midi": 56,
+                    "root_note_name": "G#3",
+                    "voicing_span_semitones": 7
+                }
+            ],
+            "scale_degree_sequence": [
+                2,
+                5
+            ],
+            "roman_numeral_sequence": [
+                "ii\u00b0(dyad)",
+                "v(dyad)"
+            ]
+        },
+        {
+            "sample_id": "260621_17_15_C#m_2HE_04",
+            "midi_file": null,
+            "audio_file": "260621_17_15_C#m_2HE_04.wav",
+            "sequence_index": 3,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 1,
+                    "roman_numeral": "i",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "first",
+                    "notes_midi": [
+                        64,
+                        68,
+                        73
+                    ],
+                    "notes_names": [
+                        "E4",
+                        "G#4",
+                        "C#5"
+                    ],
+                    "bass_note_midi": 64,
+                    "bass_note_name": "E4",
+                    "root_note_midi": 61,
+                    "root_note_name": "C#4",
+                    "voicing_span_semitones": 9
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 2,
+                    "roman_numeral": "ii\u00b0(dyad)",
+                    "chord_type": "dyad",
+                    "dyad_type": "third",
+                    "inversion": "none",
+                    "notes_midi": [
+                        51,
+                        54
+                    ],
+                    "notes_names": [
+                        "D#3",
+                        "F#3"
+                    ],
+                    "bass_note_midi": 51,
+                    "bass_note_name": "D#3",
+                    "root_note_midi": 51,
+                    "root_note_name": "D#3",
+                    "voicing_span_semitones": 3
+                }
+            ],
+            "scale_degree_sequence": [
+                1,
+                2
+            ],
+            "roman_numeral_sequence": [
+                "i",
+                "ii\u00b0(dyad)"
+            ]
+        },
+        {
+            "sample_id": "260621_17_15_C#m_2HE_05",
+            "midi_file": null,
+            "audio_file": "260621_17_15_C#m_2HE_05.wav",
+            "sequence_index": 4,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 3,
+                    "roman_numeral": "III(dyad)",
+                    "chord_type": "dyad",
+                    "dyad_type": "third",
+                    "inversion": "none",
+                    "notes_midi": [
+                        52,
+                        56
+                    ],
+                    "notes_names": [
+                        "E3",
+                        "G#3"
+                    ],
+                    "bass_note_midi": 52,
+                    "bass_note_name": "E3",
+                    "root_note_midi": 52,
+                    "root_note_name": "E3",
+                    "voicing_span_semitones": 4
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 7,
+                    "roman_numeral": "VII",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "first",
+                    "notes_midi": [
+                        63,
+                        66,
+                        71
+                    ],
+                    "notes_names": [
+                        "D#4",
+                        "F#4",
+                        "B4"
+                    ],
+                    "bass_note_midi": 63,
+                    "bass_note_name": "D#4",
+                    "root_note_midi": 59,
+                    "root_note_name": "B3",
+                    "voicing_span_semitones": 8
+                }
+            ],
+            "scale_degree_sequence": [
+                3,
+                7
+            ],
+            "roman_numeral_sequence": [
+                "III(dyad)",
+                "VII"
+            ]
+        },
+        {
+            "sample_id": "260621_17_15_C#m_2HE_06",
+            "midi_file": null,
+            "audio_file": "260621_17_15_C#m_2HE_06.wav",
+            "sequence_index": 5,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 4,
+                    "roman_numeral": "iv",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "first",
+                    "notes_midi": [
+                        69,
+                        73,
+                        78
+                    ],
+                    "notes_names": [
+                        "A4",
+                        "C#5",
+                        "F#5"
+                    ],
+                    "bass_note_midi": 69,
+                    "bass_note_name": "A4",
+                    "root_note_midi": 66,
+                    "root_note_name": "F#4",
+                    "voicing_span_semitones": 9
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "scale_degree": 6,
+                    "roman_numeral": "VI",
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "root",
+                    "notes_midi": [
+                        57,
+                        61,
+                        64
+                    ],
+                    "notes_names": [
+                        "A3",
+                        "C#4",
+                        "E4"
+                    ],
+                    "bass_note_midi": 57,
+                    "bass_note_name": "A3",
+                    "root_note_midi": 57,
+                    "root_note_name": "A3",
+                    "voicing_span_semitones": 7
+                }
+            ],
+            "scale_degree_sequence": [
+                4,
+                6
+            ],
+            "roman_numeral_sequence": [
+                "iv",
+                "VI"
+            ]
+        }
+    ]
+}

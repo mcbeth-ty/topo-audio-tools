@@ -2,6 +2,21 @@ let currentlyPlaying = null;
 let lineCounter = 1;
 
 let currentMethodology = "line_v1";
+
+const METHODOLOGY_CONFIG = {
+  line_v1: {
+    tonic_drone_enabled: false
+  },
+
+  vector_v1: {
+    tonic_drone_enabled: false
+  },
+
+  line_v2: {
+    tonic_drone_enabled: false
+  }
+};
+
 let trialStarted = false;
 
 
@@ -37,6 +52,8 @@ let tonicDroneAudio = null;
 let tonicDroneElement = null;
 let tonicDroneEnabled = false;
 let droneResumeTimer = null;
+let tonicDroneTonic = null;
+let tonicDroneFileName = null;
 
 const dropZone = document.getElementById("drop-zone");
 const NEAREST_CONNECTIONS = 5;
@@ -134,12 +151,12 @@ dropZone.addEventListener("drop", (event) => {
   for (let file of files) {
     const fileName = file.name.toLowerCase();
 
-    if (fileName.includes("tonic-drone")) {
-    createTonicDrone(file);
-    } else {
     createAudioLine(file, event.clientX, event.clientY);
+
+    if (currentMethodologyUsesTonicDrone()) {
+      tryCreateAutomaticTonicDrone(file.name);
     }
-  }
+      }
 });
 
 function createAudioLine(file, x, y) {
@@ -578,6 +595,96 @@ function createTonicDrone(file) {
   tonicDroneElement.classList.add("is-on");
 }
 
+function tryCreateAutomaticTonicDrone(sampleFileName) {
+  if (tonicDroneAudio) return;
+
+  const keyMatch = sampleFileName.match(
+    /_([A-G](?:#|b)?)(?:major|minor|maj|min|m)?_/i
+  );
+
+  if (!keyMatch) return;
+
+  const tonic = keyMatch[1].toLowerCase();
+  const noteMap = {
+    c: "C",
+    "c#": "Cs",
+    db: "Cs",
+
+    d: "D",
+    "d#": "Ds",
+    eb: "Ds",
+
+    e: "E",
+
+    f: "F",
+    "f#": "Fs",
+    gb: "Fs",
+
+    g: "G",
+    "g#": "Gs",
+    ab: "Gs",
+
+    a: "A",
+    "a#": "As",
+    bb: "As",
+
+    b: "B"
+  };
+
+  const droneNote = noteMap[tonic];
+
+  if (!droneNote) return;
+
+  const droneFileName = `tonic-drone-${droneNote}3.wav`;
+
+  tonicDroneTonic = tonic;
+  tonicDroneFileName = droneFileName;
+
+  createTonicDroneFromPath(
+    `tonic_drones/${droneFileName}`
+  );
+}
+
+function createTonicDroneFromPath(path) {
+  if (tonicDroneElement) {
+    tonicDroneElement.remove();
+  }
+
+  tonicDroneAudio = document.createElement("audio");
+  tonicDroneAudio.src = path;
+  tonicDroneAudio.loop = true;
+  tonicDroneAudio.volume = 0.25;
+
+  tonicDroneAudio.addEventListener("error", () => {
+    tonicDroneElement.textContent = "DRONE MISSING";
+    tonicDroneElement.classList.add("missing");
+    console.log("Could not load tonic drone:", path);
+  });
+
+  tonicDroneEnabled = true;
+
+  tonicDroneElement = document.createElement("div");
+  tonicDroneElement.className = "tonic-drone";
+  tonicDroneElement.textContent = "TONIC DRONE";
+
+  document.body.appendChild(tonicDroneElement);
+
+  tonicDroneElement.addEventListener("click", () => {
+    tonicDroneEnabled = !tonicDroneEnabled;
+
+    if (tonicDroneEnabled) {
+      tonicDroneAudio.play();
+      tonicDroneElement.classList.add("is-on");
+    } else {
+      tonicDroneAudio.pause();
+      tonicDroneElement.classList.remove("is-on");
+    }
+  });
+
+  tonicDroneAudio.play();
+  tonicDroneElement.classList.add("is-on");
+}
+
 function pauseTonicDrone() {
   if (!tonicDroneAudio) return;
 
@@ -627,6 +734,11 @@ function buildExportData() {
       methodology_id: currentMethodology,
       trial_id: trialId,
       export_timestamp: timestamp,
+
+      
+      tonic_drone_used: tonicDroneAudio !== null,
+      tonic_drone_tonic: tonicDroneTonic,
+      tonic_drone_file: tonicDroneFileName,
 
       canvas_width: width,
       canvas_height: height,
@@ -985,4 +1097,10 @@ function updateInstructions() {
   } else {
     instructionsContent.innerText = LINE_V1_INSTRUCTIONS;
   }
+}
+
+function currentMethodologyUsesTonicDrone() {
+  return (
+    METHODOLOGY_CONFIG[currentMethodology]?.tonic_drone_enabled === true
+  );
 }

@@ -460,3 +460,8 @@ body.vector-trial #connection-layer {
 #reset-button:hover {
   opacity: 1;
 }
+
+
+.tonic-drone.missing {
+  color: rgba(255, 120, 120, 0.65);
+}
