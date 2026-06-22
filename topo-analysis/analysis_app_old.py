@@ -505,27 +505,14 @@ st.sidebar.caption(
     f"Participant ID: {participant_filter or 'ALL'}"
 )
 
-if not available_methodologies:
-    st.warning("No methodologies found in the archive.")
-    st.stop()
-
-preferred_methodology = (
-    "line_v1"
-    if "line_v1" in available_methodologies
-    else available_methodologies[0]
-)
-
 methodology_choice = st.sidebar.selectbox(
     "Methodology",
-    options=available_methodologies,
-    index=available_methodologies.index(preferred_methodology),
-    help=(
-        "Choose exactly one mapping methodology. Mixed-method topology "
-        "combination is intentionally disabled for now."
-    )
+    options=["ALL"] + available_methodologies
 )
 
-methodology_filter = methodology_choice
+methodology_filter = (
+    None if methodology_choice == "ALL" else methodology_choice
+)
 
 temporal_scale_choice = st.sidebar.selectbox(
     "Temporal Scale",

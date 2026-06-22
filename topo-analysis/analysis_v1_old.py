@@ -376,52 +376,19 @@ def scan_archive():
                         f'{e2.get("roman_numeral", e2["scale_degree"])}'
                     )
 
-                    if methodology_id == "vector_v1":
-                        vector_delta_x = obs.get("vector_delta_x")
-                        vector_delta_y = obs.get("vector_delta_y")
+                    start_stability = 1 - obs["start_x_norm"]
+                    end_stability = 1 - obs["end_x_norm"]
+                    delta_stability = end_stability - start_stability
 
-                        if vector_delta_x is None or vector_delta_y is None:
-                            unit_x = obs.get("vector_unit_x", 0)
-                            unit_y = obs.get("vector_unit_y", 0)
-                            strength = obs.get("strength_norm", obs.get("length_norm", 0))
+                    start_brightness = 1 - obs["start_y_norm"]
+                    end_brightness = 1 - obs["end_y_norm"]
+                    delta_brightness = end_brightness - start_brightness
 
-                            vector_delta_x = unit_x * strength
-                            vector_delta_y = unit_y * strength
+                    plot_start_x = obs["start_x_norm"]
+                    plot_end_x = obs["end_x_norm"]
 
-                        # Vector exports use screen coordinates: +x points right, +y points down.
-                        # For analysis display, brightness is inverted so positive means brighter/up.
-                        # Stability follows the current line_v1 convention, where moving right lowers stability.
-                        delta_stability = -vector_delta_x
-                        delta_brightness = -vector_delta_y
-
-                        start_stability = 0.5
-                        end_stability = start_stability + delta_stability
-
-                        start_brightness = 0.5
-                        end_brightness = start_brightness + delta_brightness
-
-                        plot_start_x = 0.5
-                        plot_start_y = 0.5
-                        plot_end_x = 0.5 + vector_delta_x
-                        plot_end_y = 0.5 + vector_delta_y
-
-                    else:
-                        vector_delta_x = None
-                        vector_delta_y = None
-
-                        start_stability = 1 - obs["start_x_norm"]
-                        end_stability = 1 - obs["end_x_norm"]
-                        delta_stability = end_stability - start_stability
-
-                        start_brightness = 1 - obs["start_y_norm"]
-                        end_brightness = 1 - obs["end_y_norm"]
-                        delta_brightness = end_brightness - start_brightness
-
-                        plot_start_x = obs["start_x_norm"]
-                        plot_end_x = obs["end_x_norm"]
-
-                        plot_start_y = obs["start_y_norm"]
-                        plot_end_y = obs["end_y_norm"]
+                    plot_start_y = obs["start_y_norm"]
+                    plot_end_y = obs["end_y_norm"]
 
                     row = {
                         "participant_id": participant_id,
@@ -454,10 +421,6 @@ def scan_archive():
 
                         "movement_dx": delta_stability,
                         "movement_dy": delta_brightness,
-
-                        "vector_delta_x": vector_delta_x,
-                        "vector_delta_y": vector_delta_y,
-                        "strength_norm": obs.get("strength_norm"),
 
                         "length_norm": obs["length_norm"],
                         "angle_deg": obs["angle_deg"],
@@ -802,7 +765,7 @@ def build_ranked_sample_table(
     return compact_rows
 
 
-def compute_line_trajectory_distance(row_a, row_b):
+def compute_trajectory_distance(row_a, row_b):
     start_dx = row_a["start_stability"] - row_b["start_stability"]
     start_dy = row_a["start_brightness"] - row_b["start_brightness"]
 
@@ -815,50 +778,14 @@ def compute_line_trajectory_distance(row_a, row_b):
     return (start_distance + end_distance) / 2
 
 
-def compute_full_vector_distance(row_a, row_b):
-    dx = row_a["vector_delta_x"] - row_b["vector_delta_x"]
-    dy = row_a["vector_delta_y"] - row_b["vector_delta_y"]
-
-    return (dx ** 2 + dy ** 2) ** 0.5
-
-
-def compute_perceptual_distance(row_a, row_b):
-    methodology_a = row_a.get("methodology_id")
-    methodology_b = row_b.get("methodology_id")
-
-    if methodology_a != methodology_b:
-        raise ValueError(
-            "Cannot compute one topology from mixed methodologies yet. "
-            "Select exactly one methodology before running topology analysis."
-        )
-
-    if methodology_a == "vector_v1":
-        return compute_full_vector_distance(row_a, row_b)
-
-    return compute_line_trajectory_distance(row_a, row_b)
-
-
-# Backward-compatible name used by older grouping code.
-def compute_trajectory_distance(row_a, row_b):
-    return compute_perceptual_distance(row_a, row_b)
-
-
 def build_distance_matrix(rows):
-    methodologies = {row.get("methodology_id") for row in rows}
-
-    if len(methodologies) > 1:
-        raise ValueError(
-            "Cannot build a topology from mixed methodologies yet. "
-            "Select exactly one methodology."
-        )
-
     matrix = []
 
     for row_a in rows:
         matrix_row = []
 
         for row_b in rows:
-            distance = compute_perceptual_distance(
+            distance = compute_trajectory_distance(
                 row_a,
                 row_b
             )
