@@ -12,6 +12,9 @@ import io
 import json
 import copy
 
+import os
+
+DEMO_MODE = os.getenv("TOPO_AUDIO_DEMO", "false").lower() == "true"
 
 st.markdown("""
 <style>
@@ -336,6 +339,11 @@ st.set_page_config(
 st.title("Harmonic Sequence Generator")
 st.caption("V2 probability-field prototype")
 
+if DEMO_MODE:
+    st.info(
+        "Demo Mode · A limited public version of the Harmonic Sequence Generator."
+    )
+
 def compact_slider(label, min_val, max_val, default, key=None, label_class="compact-label"):
     col1, col2 = st.columns([1, 2.2])
 
@@ -538,7 +546,27 @@ with st.sidebar:
     
     st.subheader("HARMONIC SEQUENCE SETTINGS")
     
-    sequence_count = compact_slider("SEQUENCES", 1, 50, 6)
+    if DEMO_MODE:
+        sequence_count = 6
+
+        st.markdown(
+            """
+            <div style="
+                border: 1px solid #2a2a2a;
+                padding: 8px;
+                margin-top: 8px;
+                margin-bottom: 16px;
+                line-height: 1.4;
+            ">
+                <div style="font-size:8px; color:#777;">DEMO MODE</div>
+                <div>Sequence count fixed to 6 · Export disabled</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        sequence_count = compact_slider("SEQUENCES", 1, 50, 6)
+
     beats_per_bar = compact_slider("BEATS PER BAR", 1, 8, 4)
     bars = compact_slider("BARS", 1, 8, 2)
     harmonic_events = compact_slider("HARMONIC EVENTS", 1, 8, 2)
@@ -583,8 +611,12 @@ with st.sidebar:
         "MODE",
         ["major", "minor"]
     )
-    register_low = compact_slider("REGISTER LOW", 24, 84, 48)
-    register_high = compact_slider("REGISTER HIGH", 36, 96, 66)
+    if DEMO_MODE:
+        register_low = 48
+        register_high = 66
+    else:
+        register_low = compact_slider("REGISTER LOW", 24, 84, 48)
+        register_high = compact_slider("REGISTER HIGH", 36, 96, 66)
 
     st.subheader("CHORD TYPE WEIGHTS")
 
@@ -681,37 +713,50 @@ with st.sidebar:
 
     st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
 
-    export_dir = st.text_input(
-        "export directory",
-        "/Users/tylermcbeth/Applications/topo-audio/topo-analysis"
-    )
+    if DEMO_MODE:
+        export_tag = "demo"
+        now_string = datetime.now().strftime("%y%m%d_%H_%M")
 
-    export_tag = st.text_input(
-        "export tag",
-        ""
-    )
+        key_label = tonic_name
+        if mode == "minor":
+            key_label += "m"
 
-    now_string = datetime.now().strftime("%y%m%d_%H_%M")
+        he_label = f"{harmonic_events}HE"
+        run_name = "_".join([now_string, key_label, he_label, "demo"])
 
-    key_label = tonic_name
+        st.info("Export is disabled in demo mode.")
+    else:
+        export_dir = st.text_input(
+            "export directory",
+            "/Users/tylermcbeth/Applications/topo-audio/topo-analysis"
+        )
 
-    if mode == "minor":
-        key_label += "m"
+        export_tag = st.text_input(
+            "export tag",
+            ""
+        )
 
-    he_label = f"{harmonic_events}HE"
+        now_string = datetime.now().strftime("%y%m%d_%H_%M")
 
-    tag_clean = export_tag.strip().replace("/", "-")
+        key_label = tonic_name
 
-    folder_parts = [now_string, key_label, he_label]
+        if mode == "minor":
+            key_label += "m"
 
-    if tag_clean:
-        folder_parts.append(tag_clean)
+        he_label = f"{harmonic_events}HE"
 
-    run_name = "_".join(folder_parts)
+        tag_clean = export_tag.strip().replace("/", "-")
+
+        folder_parts = [now_string, key_label, he_label]
+
+        if tag_clean:
+            folder_parts.append(tag_clean)
+
+        run_name = "_".join(folder_parts)
 
     generate = st.button("GENERATE MIDI")
 
-    if "run_metadata" in st.session_state:
+    if not DEMO_MODE and "run_metadata" in st.session_state:
 
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
