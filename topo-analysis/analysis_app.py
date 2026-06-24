@@ -38,6 +38,8 @@ def set_latent_axis_angle(angle):
 
 toc_items = []
 
+if "audio_play_counter" not in st.session_state:
+    st.session_state["audio_play_counter"] = 0
 
 def make_anchor(label):
     return (
@@ -724,10 +726,12 @@ if "filtered_rows" in st.session_state:
             """
         )
 
+        axis_labels = get_perceptual_axis_labels(filtered_rows[0])
+
         metric_options = {
             "Movement Length": "length_norm",
-            "Brightness Change": "delta_brightness",
-            "Stability Change": "delta_stability",
+            axis_labels["y_label"]: "delta_brightness",
+            axis_labels["x_label"]: "delta_stability",
             "Movement DX": "movement_dx",
             "Movement DY": "movement_dy"
         }
@@ -933,7 +937,7 @@ if "filtered_rows" in st.session_state:
                 key=f"latent_axis_plot_{angle}",
             )
 
-            st.caption("Click a point to select a sample.")
+            st.caption("Click any point in the topology to hear its audio sample.")
 
             if clicked_points:
                 clicked_index = clicked_points[0]["pointIndex"]
@@ -950,6 +954,7 @@ if "filtered_rows" in st.session_state:
                             selected_topology_row["sample_id"]
                         )
                     )
+                
 
             angle = st.slider(
                 "Axis Angle (degrees)",
@@ -1113,6 +1118,8 @@ if "filtered_rows" in st.session_state:
                 grouped_topology_rows
             )
 
+            st.caption("Click any point in the topology to hear its audio sample.")
+
             clicked_cluster_points = plotly_events(
                 cluster_fig,
                 click_event=True,
@@ -1149,7 +1156,8 @@ if "filtered_rows" in st.session_state:
                                 "topology_label",
                                 selected_topology_row["sample_id"]
                             )
-                        )            
+                        )
+                                  
 
             max_distance = st.slider(
                 "Maximum perceptual distance",

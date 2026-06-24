@@ -85,6 +85,86 @@ def get_perceptual_axis_labels(row):
     }
 
 
+def semitone_to_interval_label(semitones):
+    interval_map = {
+        0: "P1",
+        1: "m2",
+        2: "M2",
+        3: "m3",
+        4: "M3",
+        5: "P4",
+        6: "TT",
+        7: "P5",
+        8: "m6",
+        9: "M6",
+        10: "m7",
+        11: "M7",
+    }
+
+    direction = "+" if semitones >= 0 else "-"
+    interval_class = abs(semitones) % 12
+
+    return f"{direction}{interval_map.get(interval_class, str(interval_class))}"
+
+
+def get_harmonic_object_quality(event):
+    notes = event.get("notes_midi", [])
+    root = event.get("root_note_midi")
+
+    if root is None or not notes:
+        return event.get("chord_type", "unknown")
+
+    intervals = sorted({
+        (note - root) % 12
+        for note in notes
+    })
+
+    if intervals == [0, 4, 7]:
+        return "M"
+
+    if intervals == [0, 3, 7]:
+        return "m"
+
+    if intervals == [0, 3, 6]:
+        return "dim"
+
+    if intervals == [0, 4, 8]:
+        return "aug"
+
+    if intervals == [0, 4]:
+        return "M3 dyad"
+
+    if intervals == [0, 3]:
+        return "m3 dyad"
+
+    if intervals == [0, 7]:
+        return "P5 dyad"
+
+    if len(intervals) == 2:
+        return "dyad"
+
+    if len(intervals) == 3:
+        return "triad"
+
+    return "unknown"
+
+
+def build_chord_relationship_label(e1, e2):
+    root_1 = e1.get("root_note_midi", e1.get("root_semitone"))
+    root_2 = e2.get("root_note_midi", e2.get("root_semitone"))
+
+    if root_1 is None or root_2 is None:
+        return "unknown"
+
+    root_motion = root_2 - root_1
+
+    quality_1 = get_harmonic_object_quality(e1)
+    quality_2 = get_harmonic_object_quality(e2)
+
+    interval_label = semitone_to_interval_label(root_motion)
+
+    return f"{quality_1} {interval_label} {quality_2}"
+
 
 def apply_topology_plot_theme(fig):
 
@@ -416,6 +496,8 @@ def scan_archive():
                     e1 = sample["events"][0]
                     e2 = sample["events"][1]
 
+            
+
                     e1_numeric_degree = e1.get(
                         "scale_degree",
                         e1.get("root_semitone", e1.get("root_degree", "UNKNOWN"))
@@ -510,6 +592,13 @@ def scan_archive():
 
                         "degree_transition": roman_transition,
                         "numeric_degree_transition": numeric_degree_transition,
+                        "chord_relationship": " | ".join(
+                            build_chord_relationship_label(
+                                sample["events"][i],
+                                sample["events"][i + 1]
+                            )
+                            for i in range(len(sample["events"]) - 1)
+                        ),
 
                         "start_stability": start_stability,
                         "end_stability": end_stability,
@@ -697,6 +786,7 @@ def build_sample_summary(rows):
             "sample_set_id": row["sample_set_id"],
             "sample_id": row["sample_id"],
             "degree_transition": row["degree_transition"],
+            "chord_relationship": row["chord_relationship"],
             "length_norm": row["length_norm"],
             row.get("perceptual_x_label", "Δ Stability"): row.get(
                 "perceptual_x_value",
@@ -798,6 +888,7 @@ def make_compact_sample_table(rows):
     for row in rows:
         compact_rows.append({
             "degree_transition": row["degree_transition"],
+            "chord_relationship": row["chord_relationship"],
             "notes": (
                 f"{row.get('event_1_notes_names')} → "
                 f"{row.get('event_2_notes_names')}"
@@ -869,6 +960,7 @@ def build_ranked_sample_table(
     for row in ranked_rows:
         compact_rows.append({
             "degree_transition": row["degree_transition"],
+            "chord_relationship": row["chord_relationship"],
             "ranking_value": round(
                 row["ranking_value"],
                 3
@@ -1582,7 +1674,7 @@ def build_topology_point_cloud_plot(rows):
         )
 
     fig.update_layout(
-        title="Topology Point Cloud",
+        title="Click a point to hear its audio sample",
         xaxis_title="Topology Dimension 1",
         yaxis_title="Topology Dimension 2",
         font=dict(
