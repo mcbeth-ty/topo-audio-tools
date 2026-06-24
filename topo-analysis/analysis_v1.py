@@ -37,6 +37,55 @@ FILTERS = {
 
 #none means include everything 
 
+def auto_zoom_topology_axes(fig, topology_rows, padding_ratio=0.22, min_half_range=0.12):
+    x_values = [row["topo_x"] for row in topology_rows]
+    y_values = [row["topo_y"] for row in topology_rows]
+
+    if not x_values or not y_values:
+        return fig
+
+    xmin = min(x_values)
+    xmax = max(x_values)
+    ymin = min(y_values)
+    ymax = max(y_values)
+
+    x_center = (xmin + xmax) / 2
+    y_center = (ymin + ymax) / 2
+
+    x_span = xmax - xmin
+    y_span = ymax - ymin
+
+    x_half = max((x_span / 2) * (1 + padding_ratio), min_half_range)
+    y_half = max((y_span / 2) * (1 + padding_ratio), min_half_range)
+
+    fig.update_xaxes(range=[x_center - x_half, x_center + x_half])
+    fig.update_yaxes(range=[y_center - y_half, y_center + y_half])
+
+    return fig
+
+
+def get_perceptual_axis_labels(row):
+    if row.get("methodology_id") == "vector_v2":
+        return {
+            "x_metric": "delta_arrival",
+            "y_metric": "delta_valence",
+            "x_label": "Δ Arrival",
+            "y_label": "Δ Valence",
+            "x_title": "Arrival / Departure",
+            "y_title": "Valence",
+        }
+
+    return {
+        "x_metric": "delta_stability",
+        "y_metric": "delta_brightness",
+        "x_label": "Δ Stability",
+        "y_label": "Δ Brightness",
+        "x_title": "Stability",
+        "y_title": "Brightness",
+    }
+
+
+
 def apply_topology_plot_theme(fig):
 
     fig.update_layout(
@@ -170,15 +219,16 @@ def build_interactive_affect_trajectory_plot(rows):
 
     for row in rows:
 
+        axis_labels = get_perceptual_axis_labels(row)
         hover_text = (
             f"{row['sample_id']}<br>"
             f"Transition: {row['degree_transition']}<br>"
             f"Notes: "
             f"{row['event_1_notes_names']} → "
             f"{row['event_2_notes_names']}<br>"
-            f"Δ Stability: "
+            f"{axis_labels['x_label']}: "
             f"{row['delta_stability']:.3f}<br>"
-            f"Δ Brightness: "
+            f"{axis_labels['y_label']}: "
             f"{row['delta_brightness']:.3f}"
         )
 
@@ -246,8 +296,8 @@ def build_interactive_affect_trajectory_plot(rows):
 
     fig.update_layout(
         title="Affect Trajectories",
-        xaxis_title="Stability",
-        yaxis_title="Brightness",
+        xaxis_title=get_perceptual_axis_labels(rows[0])["x_title"],
+        yaxis_title=get_perceptual_axis_labels(rows[0])["y_title"],
         xaxis=dict(range=[0, 1]),
         yaxis=dict(range=[0, 1]),
         showlegend=False,
@@ -394,7 +444,7 @@ def scan_archive():
                         f"{e1_label}→{e2_label}"
                     )
 
-                    if methodology_id == "vector_v1":
+                    if methodology_id in ["vector_v1", "vector_v2"]:
                         vector_delta_x = obs.get("vector_delta_x")
                         vector_delta_y = obs.get("vector_delta_y")
 
@@ -409,8 +459,12 @@ def scan_archive():
                         # Vector exports use screen coordinates: +x points right, +y points down.
                         # For analysis display, brightness is inverted so positive means brighter/up.
                         # Stability follows the current line_v1 convention, where moving right lowers stability.
-                        delta_stability = -vector_delta_x
-                        delta_brightness = -vector_delta_y
+                        if methodology_id == "vector_v2":
+                            delta_stability = obs.get("delta_arrival", vector_delta_x)
+                            delta_brightness = obs.get("delta_valence", vector_delta_y)
+                        else:
+                            delta_stability = -vector_delta_x
+                            delta_brightness = -vector_delta_y
 
                         start_stability = 0.5
                         end_stability = start_stability + delta_stability
@@ -465,6 +519,15 @@ def scan_archive():
                         "end_brightness": end_brightness,
                         "delta_brightness": delta_brightness,
 
+                        "perceptual_x_label": (
+                            "Δ Arrival" if methodology_id == "vector_v2" else "Δ Stability"
+                        ),
+                        "perceptual_y_label": (
+                            "Δ Valence" if methodology_id == "vector_v2" else "Δ Brightness"
+                        ),
+                        "perceptual_x_value": delta_stability,
+                        "perceptual_y_value": delta_brightness,                        
+
                         "plot_start_x": plot_start_x,
                         "plot_end_x": plot_end_x,
                         "plot_start_y": plot_start_y,
@@ -476,6 +539,9 @@ def scan_archive():
                         "vector_delta_x": vector_delta_x,
                         "vector_delta_y": vector_delta_y,
                         "strength_norm": obs.get("strength_norm"),
+
+                        "delta_arrival": obs.get("delta_arrival"),
+                        "delta_valence": obs.get("delta_valence"),
 
                         "length_norm": obs["length_norm"],
                         "angle_deg": obs["angle_deg"],
@@ -632,8 +698,14 @@ def build_sample_summary(rows):
             "sample_id": row["sample_id"],
             "degree_transition": row["degree_transition"],
             "length_norm": row["length_norm"],
-            "delta_stability": row["delta_stability"],
-            "delta_brightness": row["delta_brightness"]
+            row.get("perceptual_x_label", "Δ Stability"): row.get(
+                "perceptual_x_value",
+                row["delta_stability"]
+            ),
+            row.get("perceptual_y_label", "Δ Brightness"): row.get(
+                "perceptual_y_value",
+                row["delta_brightness"]
+            ),
         })
 
     return sample_rows
@@ -731,8 +803,14 @@ def make_compact_sample_table(rows):
                 f"{row.get('event_2_notes_names')}"
             ),
             "length_norm": row["length_norm"],
-            "delta_stability": row["delta_stability"],
-            "delta_brightness": row["delta_brightness"],
+            row.get("perceptual_x_label", "Δ Stability"): row.get(
+                "perceptual_x_value",
+                row["delta_stability"]
+            ),
+            row.get("perceptual_y_label", "Δ Brightness"): row.get(
+                "perceptual_y_value",
+                row["delta_brightness"]
+            ),
             "chord_type": (
                 f"{row.get('event_1_chord_type')} → "
                 f"{row.get('event_2_chord_type')}"
@@ -799,12 +877,12 @@ def build_ranked_sample_table(
                 row["length_norm"],
                 3
             ),
-            "delta_stability": round(
-                row["delta_stability"],
+            row.get("perceptual_x_label", "Δ Stability"): round(
+                row.get("perceptual_x_value", row["delta_stability"]),
                 3
             ),
-            "delta_brightness": round(
-                row["delta_brightness"],
+            row.get("perceptual_y_label", "Δ Brightness"): round(
+                row.get("perceptual_y_value", row["delta_brightness"]),
                 3
             ),
             "movement_dx": round(
@@ -1144,16 +1222,18 @@ def compute_axis_correlations(
         for row in projected_rows
     ]
 
+    axis_labels = get_perceptual_axis_labels(projected_rows[0])
+
     variables = {
-        "delta_brightness": [
-            row["delta_brightness"]
+        axis_labels["y_label"]: [
+            row.get("perceptual_y_value", row["delta_brightness"])
             for row in projected_rows
         ],
-        "delta_stability": [
-            row["delta_stability"]
+        axis_labels["x_label"]: [
+            row.get("perceptual_x_value", row["delta_stability"])
             for row in projected_rows
         ],
-        "length_norm": [
+        "Length": [
             row["length_norm"]
             for row in projected_rows
         ],
@@ -1232,11 +1312,8 @@ def build_axis_correlation_curve_plot(
 
     fig = go.Figure()
 
-    variables = [
-        "delta_brightness",
-        "delta_stability",
-        "length_norm"
-    ]
+    variables = list(angle_rows[0].keys())
+    variables.remove("angle")
 
     for variable in variables:
 
@@ -1313,7 +1390,7 @@ def build_latent_axis_point_cloud_plot(
         max(abs(y) for y in y_values)
     )
 
-    axis_limit = 0.7
+    axis_limit = max_extent * 1.25
 
     theta = math.radians(angle_deg)
 
@@ -1360,6 +1437,7 @@ def build_latent_axis_point_cloud_plot(
         point_x.append(row["topo_x"])
         point_y.append(row["topo_y"])
         sample_ids.append(row["topology_unit_id"])
+        axis_labels = get_perceptual_axis_labels(row)
 
         hover_texts.append(
             f"{row['topology_label']}<br>"
@@ -1368,8 +1446,8 @@ def build_latent_axis_point_cloud_plot(
             f"Participants: {row.get('participant_count', 1)}<br>"
             f"Transition: {row['degree_transition']}<br>"
             f"Length: {row['length_norm']:.3f}<br>"
-            f"Δ Stability: {row['delta_stability']:.3f}<br>"
-            f"Δ Brightness: {row['delta_brightness']:.3f}"
+            f"{axis_labels['x_label']}: {row['delta_stability']:.3f}<br>"
+            f"{axis_labels['y_label']}: {row['delta_brightness']:.3f}"
         )
 
     fig.add_trace(
@@ -1414,7 +1492,6 @@ def build_latent_axis_point_cloud_plot(
 
 
     fig.update_xaxes(
-        range=[-axis_limit, axis_limit],
         showgrid=True,
         gridcolor="#2b2f3a",
         zeroline=False,
@@ -1422,7 +1499,6 @@ def build_latent_axis_point_cloud_plot(
     )
 
     fig.update_yaxes(
-        range=[-axis_limit, axis_limit],
         showgrid=True,
         gridcolor="#2b2f3a",
         zeroline=False,
@@ -1430,6 +1506,13 @@ def build_latent_axis_point_cloud_plot(
         scaleratio=1,
         fixedrange=True
     )
+
+    # fig = auto_zoom_topology_axes(
+    #     fig,
+    #     topology_rows,
+    #     padding_ratio=0.18,
+    #     min_half_range=0.08
+    # )
 
     fig.update_layout(
         template="plotly_dark",
@@ -1453,6 +1536,13 @@ def build_latent_axis_point_cloud_plot(
     )
 
     fig = apply_topology_plot_theme(fig)
+
+    fig = auto_zoom_topology_axes(
+        fig,
+        topology_rows,
+        padding_ratio=0.22,
+        min_half_range=0.12
+    )
 
     return fig
 
@@ -1543,9 +1633,8 @@ def find_best_axis_angles(
     )
 
     variables = [
-        "delta_brightness",
-        "delta_stability",
-        "length_norm"
+        key for key in angle_rows[0].keys()
+        if key != "angle"
     ]
 
     best_rows = []
@@ -1612,6 +1701,7 @@ def build_clustered_topology_plot(
         hover_values = []
 
         for row in group_rows:
+            axis_labels = get_perceptual_axis_labels(row)
             hover_values.append(
                 f"{row.get('topology_label', row['sample_id'])}<br>"
                 f"{row['group_id']}<br>"
@@ -1620,8 +1710,8 @@ def build_clustered_topology_plot(
                 f"Participants: {row.get('participant_count', 1)}<br>"
                 f"Transition: {row['degree_transition']}<br>"
                 f"Length: {row['length_norm']:.3f}<br>"
-                f"Δ Stability: {row['delta_stability']:.3f}<br>"
-                f"Δ Brightness: {row['delta_brightness']:.3f}"
+                f"{axis_labels['x_label']}: {row['delta_stability']:.3f}<br>"
+                f"{axis_labels['y_label']}: {row['delta_brightness']:.3f}"
             )
 
         marker_style = dict(
@@ -1661,7 +1751,7 @@ def build_clustered_topology_plot(
         max(abs(y) for y in y_all)
     )
 
-    axis_limit = 0.7
+    axis_limit = max_extent * 1.25
 
     fig.update_layout(
         xaxis_title="Embedding Coordinate A",
@@ -1684,14 +1774,12 @@ def build_clustered_topology_plot(
     )
 
     fig.update_xaxes(
-        range=[-axis_limit, axis_limit],
         showgrid=True,
         zeroline=False,
         fixedrange=True
     )
 
     fig.update_yaxes(
-        range=[-axis_limit, axis_limit],
         showgrid=True,
         zeroline=False,
         scaleanchor="x",
@@ -1701,8 +1789,14 @@ def build_clustered_topology_plot(
 
     fig = apply_topology_plot_theme(fig)
 
-    return fig
+    fig = auto_zoom_topology_axes(
+        fig,
+        topology_rows,
+        padding_ratio=0.22,
+        min_half_range=0.12
+    )
 
+    return fig
 
 def build_proximity_groups(rows, max_distance):
     groups = []

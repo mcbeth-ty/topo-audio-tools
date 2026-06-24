@@ -1223,7 +1223,7 @@ function getVectorMaxRadius() {
 }
 
 function updateInstructions() {
-  if (currentMethodology === "vector_v1") {
+  if (isVectorMethodology()) {
     instructionsContent.innerText = VECTOR_V1_INSTRUCTIONS;
   } else {
     instructionsContent.innerText = LINE_V1_INSTRUCTIONS;

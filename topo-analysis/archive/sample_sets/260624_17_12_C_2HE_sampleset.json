@@ -1,0 +1,1036 @@
+{
+    "generator_version": "v2_probability_field",
+    "created_at": "2026-06-24T17:12:04.933824",
+    "run_name": "260624_17_12_C_2HE",
+    "global_settings": {
+        "mode": "major",
+        "modal_preset": "major",
+        "tonic_midi": 60,
+        "harmonic_events": 2,
+        "bars": 2,
+        "beats_per_bar": 4,
+        "bpm": 120,
+        "duration_beats": 8,
+        "duration_seconds": 4.0,
+        "temporal_integration_scale": "Local Scale",
+        "temporal_integration_window_seconds": [
+            3,
+            10
+        ],
+        "temporal_integration_scale_description": "Short perceptual trajectories and simple affective contours.",
+        "register_low": 48,
+        "register_high": 66,
+        "harmonic_field_size": 48,
+        "active_harmonic_labels": [
+            "I",
+            "i",
+            "i\u00b0",
+            "I+",
+            "\u266dII",
+            "\u266dii",
+            "\u266dii\u00b0",
+            "\u266dII+",
+            "II",
+            "ii",
+            "ii\u00b0",
+            "II+",
+            "\u266dIII",
+            "\u266diii",
+            "\u266diii\u00b0",
+            "\u266dIII+",
+            "III",
+            "iii",
+            "iii\u00b0",
+            "III+",
+            "IV",
+            "iv",
+            "iv\u00b0",
+            "IV+",
+            "\u266dV",
+            "\u266dv",
+            "\u266dv\u00b0",
+            "\u266dV+",
+            "V",
+            "v",
+            "v\u00b0",
+            "V+",
+            "\u266dVI",
+            "\u266dvi",
+            "\u266dvi\u00b0",
+            "\u266dVI+",
+            "VI",
+            "vi",
+            "vi\u00b0",
+            "VI+",
+            "\u266dVII",
+            "\u266dvii",
+            "\u266dvii\u00b0",
+            "\u266dVII+",
+            "VII",
+            "vii",
+            "vii\u00b0",
+            "VII+"
+        ],
+        "field_weights": {
+            "diatonic": 100,
+            "parallel_borrowing": 48,
+            "uncommon_1": 39,
+            "uncommon_2": 41
+        },
+        "diatonic_object_weights": {
+            "I": 95,
+            "ii": 85,
+            "iii": 75,
+            "IV": 90,
+            "V": 95,
+            "vi": 85,
+            "vii\u00b0": 65
+        },
+        "chord_type_weights": {
+            "dyad": 20,
+            "triad": 80
+        }
+    },
+    "harmonic_probability_field": [
+        {
+            "roman_numeral": "I",
+            "root_degree": "I",
+            "root_semitone": 0,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 95.0,
+            "diatonic_object_weight": 95
+        },
+        {
+            "roman_numeral": "i",
+            "root_degree": "I",
+            "root_semitone": 0,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "i\u00b0",
+            "root_degree": "I",
+            "root_semitone": 0,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "I+",
+            "root_degree": "I",
+            "root_semitone": 0,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dII",
+            "root_degree": "\u266dII",
+            "root_semitone": 1,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dii",
+            "root_degree": "\u266dII",
+            "root_semitone": 1,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dii\u00b0",
+            "root_degree": "\u266dII",
+            "root_semitone": 1,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dII+",
+            "root_degree": "\u266dII",
+            "root_semitone": 1,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "II",
+            "root_degree": "II",
+            "root_semitone": 2,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "ii",
+            "root_degree": "II",
+            "root_semitone": 2,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 85.0,
+            "diatonic_object_weight": 85
+        },
+        {
+            "roman_numeral": "ii\u00b0",
+            "root_degree": "II",
+            "root_semitone": 2,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "II+",
+            "root_degree": "II",
+            "root_semitone": 2,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dIII",
+            "root_degree": "\u266dIII",
+            "root_semitone": 3,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266diii",
+            "root_degree": "\u266dIII",
+            "root_semitone": 3,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266diii\u00b0",
+            "root_degree": "\u266dIII",
+            "root_semitone": 3,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dIII+",
+            "root_degree": "\u266dIII",
+            "root_semitone": 3,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "III",
+            "root_degree": "III",
+            "root_semitone": 4,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "iii",
+            "root_degree": "III",
+            "root_semitone": 4,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 75.0,
+            "diatonic_object_weight": 75
+        },
+        {
+            "roman_numeral": "iii\u00b0",
+            "root_degree": "III",
+            "root_semitone": 4,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "III+",
+            "root_degree": "III",
+            "root_semitone": 4,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "IV",
+            "root_degree": "IV",
+            "root_semitone": 5,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 90.0,
+            "diatonic_object_weight": 90
+        },
+        {
+            "roman_numeral": "iv",
+            "root_degree": "IV",
+            "root_semitone": 5,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "iv\u00b0",
+            "root_degree": "IV",
+            "root_semitone": 5,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "IV+",
+            "root_degree": "IV",
+            "root_semitone": 5,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dV",
+            "root_degree": "\u266dV",
+            "root_semitone": 6,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dv",
+            "root_degree": "\u266dV",
+            "root_semitone": 6,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dv\u00b0",
+            "root_degree": "\u266dV",
+            "root_semitone": 6,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dV+",
+            "root_degree": "\u266dV",
+            "root_semitone": 6,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "V",
+            "root_degree": "V",
+            "root_semitone": 7,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 95.0,
+            "diatonic_object_weight": 95
+        },
+        {
+            "roman_numeral": "v",
+            "root_degree": "V",
+            "root_semitone": 7,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "v\u00b0",
+            "root_degree": "V",
+            "root_semitone": 7,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "V+",
+            "root_degree": "V",
+            "root_semitone": 7,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dVI",
+            "root_degree": "\u266dVI",
+            "root_semitone": 8,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dvi",
+            "root_degree": "\u266dVI",
+            "root_semitone": 8,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dvi\u00b0",
+            "root_degree": "\u266dVI",
+            "root_semitone": 8,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dVI+",
+            "root_degree": "\u266dVI",
+            "root_semitone": 8,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "VI",
+            "root_degree": "VI",
+            "root_semitone": 9,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "vi",
+            "root_degree": "VI",
+            "root_semitone": 9,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 85.0,
+            "diatonic_object_weight": 85
+        },
+        {
+            "roman_numeral": "vi\u00b0",
+            "root_degree": "VI",
+            "root_semitone": 9,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "VI+",
+            "root_degree": "VI",
+            "root_semitone": 9,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dVII",
+            "root_degree": "\u266dVII",
+            "root_semitone": 10,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "parallel_borrowing",
+            "minor_preset_role": "diatonic",
+            "active_preset": "major",
+            "active_role": "parallel_borrowing",
+            "weight": 48,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dvii",
+            "root_degree": "\u266dVII",
+            "root_semitone": 10,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dvii\u00b0",
+            "root_degree": "\u266dVII",
+            "root_semitone": 10,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "\u266dVII+",
+            "root_degree": "\u266dVII",
+            "root_semitone": 10,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "VII",
+            "root_degree": "VII",
+            "root_semitone": 11,
+            "quality": "major",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "vii",
+            "root_degree": "VII",
+            "root_semitone": 11,
+            "quality": "minor",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                7
+            ],
+            "major_preset_role": "uncommon_1",
+            "minor_preset_role": "uncommon_1",
+            "active_preset": "major",
+            "active_role": "uncommon_1",
+            "weight": 39,
+            "diatonic_object_weight": null
+        },
+        {
+            "roman_numeral": "vii\u00b0",
+            "root_degree": "VII",
+            "root_semitone": 11,
+            "quality": "diminished",
+            "triad_intervals_from_root": [
+                0,
+                3,
+                6
+            ],
+            "major_preset_role": "diatonic",
+            "minor_preset_role": "parallel_borrowing",
+            "active_preset": "major",
+            "active_role": "diatonic",
+            "weight": 65.0,
+            "diatonic_object_weight": 65
+        },
+        {
+            "roman_numeral": "VII+",
+            "root_degree": "VII",
+            "root_semitone": 11,
+            "quality": "augmented",
+            "triad_intervals_from_root": [
+                0,
+                4,
+                8
+            ],
+            "major_preset_role": "uncommon_2",
+            "minor_preset_role": "uncommon_2",
+            "active_preset": "major",
+            "active_role": "uncommon_2",
+            "weight": 41,
+            "diatonic_object_weight": null
+        }
+    ],
+    "samples": [
+        {
+            "sample_id": "260624_17_12_C_2HE_01",
+            "midi_file": null,
+            "audio_file": "260624_17_12_C_2HE_01.wav",
+            "sequence_index": 0,
+            "events": [
+                {
+                    "event_index": 0,
+                    "start_beat": 0.0,
+                    "end_beat": 4.0,
+                    "duration_beats": 4.0,
+                    "roman_numeral": "II",
+                    "display_label": "II",
+                    "intended_roman_numeral": "II",
+                    "intended_quality": "major",
+                    "root_degree": "II",
+                    "root_semitone": 2,
+                    "triad_intervals_from_root": [
+                        0,
+                        4,
+                        7
+                    ],
+                    "active_preset": "major",
+                    "active_role": "uncommon_1",
+                    "source_weight": 39,
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "root",
+                    "sounded_intervals_from_root": [
+                        0,
+                        4,
+                        7
+                    ],
+                    "sounded_quality_label": "major",
+                    "is_full_triad": true,
+                    "notes_midi": [
+                        62,
+                        66,
+                        69
+                    ],
+                    "notes_names": [
+                        "D4",
+                        "F#4",
+                        "A4"
+                    ],
+                    "bass_note_midi": 62,
+                    "bass_note_name": "D4",
+                    "root_note_midi": 62,
+                    "root_note_name": "D4",
+                    "voicing_span_semitones": 7
+                },
+                {
+                    "event_index": 1,
+                    "start_beat": 4.0,
+                    "end_beat": 8.0,
+                    "duration_beats": 4.0,
+                    "roman_numeral": "v\u00b0",
+                    "display_label": "v\u00b0",
+                    "intended_roman_numeral": "v\u00b0",
+                    "intended_quality": "diminished",
+                    "root_degree": "V",
+                    "root_semitone": 7,
+                    "triad_intervals_from_root": [
+                        0,
+                        3,
+                        6
+                    ],
+                    "active_preset": "major",
+                    "active_role": "uncommon_2",
+                    "source_weight": 41,
+                    "chord_type": "triad",
+                    "dyad_type": null,
+                    "inversion": "first",
+                    "sounded_intervals_from_root": [
+                        0,
+                        3,
+                        6
+                    ],
+                    "sounded_quality_label": "diminished",
+                    "is_full_triad": true,
+                    "notes_midi": [
+                        58,
+                        61,
+                        67
+                    ],
+                    "notes_names": [
+                        "A#3",
+                        "C#4",
+                        "G4"
+                    ],
+                    "bass_note_midi": 58,
+                    "bass_note_name": "A#3",
+                    "root_note_midi": 55,
+                    "root_note_name": "G3",
+                    "voicing_span_semitones": 9
+                }
+            ],
+            "roman_numeral_sequence": [
+                "II",
+                "v\u00b0"
+            ],
+            "display_label_sequence": [
+                "II",
+                "v\u00b0"
+            ],
+            "intended_roman_numeral_sequence": [
+                "II",
+                "v\u00b0"
+            ],
+            "root_degree_sequence": [
+                "II",
+                "V"
+            ],
+            "root_semitone_sequence": [
+                2,
+                7
+            ],
+            "quality_sequence": [
+                "major",
+                "diminished"
+            ]
+        }
+    ]
+}

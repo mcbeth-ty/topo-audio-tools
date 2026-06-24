@@ -29,6 +29,7 @@ from analysis_v1 import (
     build_latent_axis_point_cloud_plot,
     find_best_axis_angles,
     get_topology_fidelity,
+    get_perceptual_axis_labels,
     OUTPUT_DIR
 )
 
@@ -998,29 +999,35 @@ if "filtered_rows" in st.session_state:
                 for row in best_angle_rows
             }
 
+            axis_labels = get_perceptual_axis_labels(topology_rows[0])
+
+            y_variable = axis_labels["y_label"]
+            x_variable = axis_labels["x_label"]
+            length_variable = "Length"
+
             col1, col2, col3 = st.columns(3)
 
             col1.button(
-                "Brightness Δ",
+                f"{y_variable}",
                 help=(
-                    "Jump to the axis angle with the strongest absolute "
-                    "correlation to brightness change."
+                    f"Jump to the axis angle with the strongest absolute "
+                    f"correlation to {y_variable.lower()}."
                 ),
                 on_click=set_latent_axis_angle,
                 args=(
-                    best_angle_lookup["delta_brightness"],
+                    best_angle_lookup[y_variable],
                 )
             )
 
             col2.button(
-                "Stability Δ",
+                f"{x_variable}",
                 help=(
-                    "Jump to the axis angle with the strongest absolute "
-                    "correlation to stability change."
+                    f"Jump to the axis angle with the strongest absolute "
+                    f"correlation to {x_variable.lower()}."
                 ),
                 on_click=set_latent_axis_angle,
                 args=(
-                    best_angle_lookup["delta_stability"],
+                    best_angle_lookup[x_variable],
                 )
             )
 
@@ -1032,7 +1039,7 @@ if "filtered_rows" in st.session_state:
                 ),
                 on_click=set_latent_axis_angle,
                 args=(
-                    best_angle_lookup["length_norm"],
+                    best_angle_lookup[length_variable],
                 )
             )
 
@@ -1258,8 +1265,15 @@ if "filtered_rows" in st.session_state:
             st.write(f"Sample ID: {selected_row['sample_id']}")
             st.write(f"Transition: {selected_row['degree_transition']}")
             st.write(f"Length: {selected_row['length_norm']:.3f}")
-            st.write(f"Δ Stability: {selected_row['delta_stability']:.3f}")
-            st.write(f"Δ Brightness: {selected_row['delta_brightness']:.3f}")
+            st.write(
+                f"{selected_row.get('perceptual_x_label', 'Δ Stability')}: "
+                f"{selected_row.get('perceptual_x_value', selected_row['delta_stability']):.3f}"
+            )
+
+            st.write(
+                f"{selected_row.get('perceptual_y_label', 'Δ Brightness')}: "
+                f"{selected_row.get('perceptual_y_value', selected_row['delta_brightness']):.3f}"
+            )
 
             st.markdown("### Harmonic Details")
 
