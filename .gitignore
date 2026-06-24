@@ -10,7 +10,7 @@ venv/
 .venv/
 
 # Streamlit
-.streamlit/
+.streamlit/secrets.toml
 
 # VS Code
 .vscode/
