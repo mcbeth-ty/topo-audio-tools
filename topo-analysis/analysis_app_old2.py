@@ -543,27 +543,6 @@ sample_set_choices = st.sidebar.multiselect(
     default=["ALL"]
 )
 
-available_trial_sets = sorted(
-    set(row["trial_id"] for row in rows)
-)
-
-trial_set_choices = st.sidebar.multiselect(
-    "Trial Sets",
-    options=["ALL"] + available_trial_sets,
-    default=["ALL"]
-)
-
-if "ALL" in trial_set_choices and len(trial_set_choices) > 1:
-    trial_set_choices = [
-        choice for choice in trial_set_choices
-        if choice != "ALL"
-    ]
-
-if "ALL" in trial_set_choices:
-    trial_set_filter = None
-else:
-    trial_set_filter = trial_set_choices
-
 if "ALL" in sample_set_choices and len(sample_set_choices) > 1:
     sample_set_choices = [
         choice for choice in sample_set_choices
@@ -581,7 +560,6 @@ if st.sidebar.button("Run Analysis"):
         "participant_id": participant_filter or None,
         "methodology_id": methodology_filter or None,
         "sample_set_id": sample_set_filter or None,
-        "trial_set_id": trial_set_filter or None,
         "temporal_integration_scale": temporal_scale_choice,
     }
 
@@ -804,48 +782,24 @@ if "filtered_rows" in st.session_state:
 
         st.caption(
             """
-            Choose the unit of analysis before constructing the topology.
-            Observation Mode keeps every mapping separate. Participant-Sample
-            Mode collapses repeats by participant and sample. Sample Aggregate
-            Mode collapses all matching sample IDs into one topology point.
+            Each point represents one sample in the perceptual topology. The cyan
+            line is a rotatable interpretive axis used to test whether known
+            variables align with directions through the topology.
             """
-        )
-
-        topology_unit = st.radio(
-            "Topology Unit",
-            options=[
-                "Sample Aggregate",
-                "Participant-Sample",
-                "Observation"
-            ],
-            horizontal=True,
-            help=(
-                "Controls whether repeated samples are collapsed before MDS. "
-                "Sample Aggregate is best for a collective sample topology; "
-                "Observation is best for raw response clouds."
-            )
         )
 
         n_components = 2
 
         topology_rows, stress = build_topology_embedding(
             filtered_rows,
-            n_components=n_components,
-            topology_unit=topology_unit
+            n_components=n_components
         )
-
-        if len(topology_rows) < 2:
-            st.warning(
-                "Not enough topology units to build an embedding. "
-                "Try a broader filter or use Observation Mode."
-            )
-            st.stop()
 
         fidelity = get_topology_fidelity(
             stress
         )
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         col1.metric(
             "Embedding Dimensions",
@@ -880,15 +834,6 @@ if "filtered_rows" in st.session_state:
                 "A rough interpretation of the MDS stress value. Higher fidelity "
                 "means the visible point cloud can be trusted more as a map of "
                 "perceptual similarity."
-            )
-        )
-
-        col4.metric(
-            "Topology Points",
-            str(len(topology_rows)),
-            help=(
-                "The number of units actually embedded after applying the "
-                "selected topology-unit collapse mode."
             )
         )
 
@@ -942,12 +887,6 @@ if "filtered_rows" in st.session_state:
 
                     st.session_state["selected_topology_sample_id"] = (
                         selected_topology_row["sample_id"]
-                    )
-                    st.session_state["selected_topology_label"] = (
-                        selected_topology_row.get(
-                            "topology_label",
-                            selected_topology_row["sample_id"]
-                        )
                     )
 
             angle = st.slider(
@@ -1097,10 +1036,29 @@ if "filtered_rows" in st.session_state:
                 )
 
             else:
-                grouped_topology_rows = assign_proximity_group_ids(
-                    topology_rows,
+                grouped_rows = assign_proximity_group_ids(
+                    filtered_rows,
                     max_distance
                 )
+
+                group_lookup = {
+                    row["sample_id"]: {
+                        "group_id": row["group_id"],
+                        "group_size": row["group_size"]
+                    }
+                    for row in grouped_rows
+                }
+
+                grouped_topology_rows = []
+
+                for row in topology_rows:
+                    group_info = group_lookup[row["sample_id"]]
+
+                    grouped_topology_rows.append({
+                        **row,
+                        "group_id": group_info["group_id"],
+                        "group_size": group_info["group_size"]
+                    })
 
             cluster_fig = build_clustered_topology_plot(
                 grouped_topology_rows
@@ -1112,7 +1070,7 @@ if "filtered_rows" in st.session_state:
                 hover_event=False,
                 select_event=False,
                 override_height=500,
-                key=f"cluster_plot_{max_distance}_{grouping_mode}_{topology_unit}"
+                key=f"cluster_plot_{max_distance}_{grouping_mode}"
             )
 
             if clicked_cluster_points:
@@ -1136,12 +1094,6 @@ if "filtered_rows" in st.session_state:
 
                         st.session_state["selected_topology_sample_id"] = (
                             selected_topology_row["sample_id"]
-                        )
-                        st.session_state["selected_topology_label"] = (
-                            selected_topology_row.get(
-                                "topology_label",
-                                selected_topology_row["sample_id"]
-                            )
                         )            
 
             max_distance = st.slider(
@@ -1207,12 +1159,7 @@ if "filtered_rows" in st.session_state:
             if matching_rows:
                 selected_row = matching_rows[0]
 
-                selected_label = st.session_state.get(
-                    "selected_topology_label",
-                    selected_sample_id
-                )
-
-                st.write(f"Selected topology unit: {selected_label}")
+                st.write(f"Selected sample: {selected_sample_id}")
 
                 audio_path = selected_row.get("audio_path")
 

@@ -566,7 +566,6 @@ def apply_filters(rows, filters=FILTERS):
         temporal_scale_filter = filters.get(
             "temporal_integration_scale"
         )       
-        trial_filter = filters.get("trial_id")
 
         if participant_filter is not None:
             if row["participant_id"] != participant_filter:
@@ -582,14 +581,6 @@ def apply_filters(rows, filters=FILTERS):
                     continue
             else:
                 if row["sample_set_id"] != sample_set_filter:
-                    continue
-
-        if trial_filter is not None:
-            if isinstance(trial_filter, list):
-                if row["trial_id"] not in trial_filter:
-                    continue
-            else:
-                if row["trial_id"] != trial_filter:
                     continue
 
         if temporal_scale_filter is not None:
@@ -852,162 +843,6 @@ def compute_trajectory_distance(row_a, row_b):
     return compute_perceptual_distance(row_a, row_b)
 
 
-def mean_numeric(values):
-    numeric_values = [
-        value for value in values
-        if isinstance(value, (int, float))
-    ]
-
-    if not numeric_values:
-        return None
-
-    return sum(numeric_values) / len(numeric_values)
-
-
-def collapse_text_values(values):
-    unique_values = sorted({
-        value for value in values
-        if value is not None
-    })
-
-    if not unique_values:
-        return None
-
-    if len(unique_values) == 1:
-        return unique_values[0]
-
-    return "MULTIPLE"
-
-
-def get_topology_group_key(row, topology_unit):
-    if topology_unit == "Observation":
-        return None
-
-    if topology_unit == "Participant-Sample":
-        return (
-            row.get("participant_id"),
-            row.get("sample_id")
-        )
-
-    return (row.get("sample_id"),)
-
-
-def aggregate_rows_for_topology(
-    rows,
-    topology_unit="Sample Aggregate"
-):
-    if topology_unit == "Observation":
-        observation_rows = []
-
-        for index, row in enumerate(rows, start=1):
-            observation_rows.append({
-                **row,
-                "topology_unit": topology_unit,
-                "topology_unit_id": f"obs_{index:05d}",
-                "topology_label": row["sample_id"],
-                "observation_count": 1,
-                "participant_count": 1,
-                "source_trial_count": 1,
-                "source_sample_ids": row["sample_id"],
-            })
-
-        return observation_rows
-
-    grouped = {}
-
-    for row in rows:
-        key = get_topology_group_key(row, topology_unit)
-
-        if key not in grouped:
-            grouped[key] = []
-
-        grouped[key].append(row)
-
-    aggregate_rows = []
-
-    numeric_keys = [
-        "start_stability",
-        "end_stability",
-        "delta_stability",
-        "start_brightness",
-        "end_brightness",
-        "delta_brightness",
-        "plot_start_x",
-        "plot_end_x",
-        "plot_start_y",
-        "plot_end_y",
-        "movement_dx",
-        "movement_dy",
-        "vector_delta_x",
-        "vector_delta_y",
-        "strength_norm",
-        "length_norm",
-        "angle_deg",
-        "duration_seconds",
-        "temporal_integration_window_seconds",
-    ]
-
-    for key, group_rows in grouped.items():
-        base_row = dict(group_rows[0])
-
-        participant_ids = sorted({
-            row.get("participant_id")
-            for row in group_rows
-            if row.get("participant_id") is not None
-        })
-
-        trial_ids = sorted({
-            row.get("trial_id")
-            for row in group_rows
-            if row.get("trial_id") is not None
-        })
-
-        sample_ids = sorted({
-            row.get("sample_id")
-            for row in group_rows
-            if row.get("sample_id") is not None
-        })
-
-        sample_id = collapse_text_values(sample_ids)
-        participant_id = collapse_text_values(participant_ids)
-
-        if topology_unit == "Participant-Sample":
-            topology_unit_id = f"{participant_id}|{sample_id}"
-            topology_label = f"{participant_id} / {sample_id}"
-        else:
-            topology_unit_id = str(sample_id)
-            topology_label = str(sample_id)
-
-        aggregate_row = {
-            **base_row,
-            "participant_id": participant_id,
-            "trial_id": collapse_text_values(trial_ids),
-            "sample_id": sample_id,
-            "topology_unit": topology_unit,
-            "topology_unit_id": topology_unit_id,
-            "topology_label": topology_label,
-            "observation_count": len(group_rows),
-            "participant_count": len(participant_ids),
-            "source_trial_count": len(trial_ids),
-            "source_sample_ids": ", ".join(sample_ids),
-        }
-
-        for numeric_key in numeric_keys:
-            aggregate_row[numeric_key] = mean_numeric([
-                row.get(numeric_key)
-                for row in group_rows
-            ])
-
-        aggregate_rows.append(aggregate_row)
-
-    aggregate_rows = sorted(
-        aggregate_rows,
-        key=lambda row: row["topology_unit_id"]
-    )
-
-    return aggregate_rows
-
-
 def build_distance_matrix(rows):
     methodologies = {row.get("methodology_id") for row in rows}
 
@@ -1037,18 +872,12 @@ def build_distance_matrix(rows):
 
 def build_topology_embedding(
     rows,
-    n_components=2,
-    topology_unit="Sample Aggregate"
+    n_components=2
 ):
-    topology_input_rows = aggregate_rows_for_topology(
-        rows,
-        topology_unit=topology_unit
-    )
+    if len(rows) < 2:
+        return []
 
-    if len(topology_input_rows) < 2:
-        return [], 0.0
-
-    distance_matrix = build_distance_matrix(topology_input_rows)
+    distance_matrix = build_distance_matrix(rows)
 
     mds = MDS(
         n_components=n_components,
@@ -1062,7 +891,7 @@ def build_topology_embedding(
 
     topology_rows = []
 
-    for row, coord in zip(topology_input_rows, coords):
+    for row, coord in zip(rows, coords):
         topology_rows.append({
             **row,
             "topo_x": coord[0],
@@ -1341,13 +1170,10 @@ def build_latent_axis_point_cloud_plot(
     for row in topology_rows:
         point_x.append(row["topo_x"])
         point_y.append(row["topo_y"])
-        sample_ids.append(row["topology_unit_id"])
+        sample_ids.append(row["sample_id"])
 
         hover_texts.append(
-            f"{row['topology_label']}<br>"
-            f"Unit: {row.get('topology_unit')}<br>"
-            f"Observations: {row.get('observation_count', 1)}<br>"
-            f"Participants: {row.get('participant_count', 1)}<br>"
+            f"{row['sample_id']}<br>"
             f"Transition: {row['degree_transition']}<br>"
             f"Length: {row['length_norm']:.3f}<br>"
             f"Δ Stability: {row['delta_stability']:.3f}<br>"
@@ -1439,7 +1265,7 @@ def build_latent_axis_point_cloud_plot(
     return fig
 
 def build_topology_point_cloud_plot(rows):
-    topology_rows, stress = build_topology_embedding(rows)
+    topology_rows = build_topology_embedding(rows)
 
     fig = go.Figure()
 
@@ -1587,7 +1413,7 @@ def build_clustered_topology_plot(
         ]
 
         text_values = [
-            row.get("topology_label", row["sample_id"]).split("_")[-1]
+            row["sample_id"].split("_")[-1]
             for row in group_rows
         ]
 
@@ -1595,11 +1421,9 @@ def build_clustered_topology_plot(
 
         for row in group_rows:
             hover_values.append(
-                f"{row.get('topology_label', row['sample_id'])}<br>"
+                f"{row['sample_id']}<br>"
                 f"{row['group_id']}<br>"
                 f"Group size: {row['group_size']}<br>"
-                f"Observations: {row.get('observation_count', 1)}<br>"
-                f"Participants: {row.get('participant_count', 1)}<br>"
                 f"Transition: {row['degree_transition']}<br>"
                 f"Length: {row['length_norm']:.3f}<br>"
                 f"Δ Stability: {row['delta_stability']:.3f}<br>"
@@ -1760,17 +1584,17 @@ def assign_topology_group_ids(
     topology_rows,
     max_distance
 ):
-    visited_unit_ids = set()
+    visited_sample_ids = set()
     grouped_rows = []
     group_counter = 1
 
     row_lookup = {
-        row["topology_unit_id"]: row
+        row["sample_id"]: row
         for row in topology_rows
     }
 
     neighbors = {
-        row["topology_unit_id"]: []
+        row["sample_id"]: []
         for row in topology_rows
     }
 
@@ -1786,33 +1610,33 @@ def assign_topology_group_ids(
             )
 
             if distance <= max_distance:
-                neighbors[row_a["topology_unit_id"]].append(
-                    row_b["topology_unit_id"]
+                neighbors[row_a["sample_id"]].append(
+                    row_b["sample_id"]
                 )
-                neighbors[row_b["topology_unit_id"]].append(
-                    row_a["topology_unit_id"]
+                neighbors[row_b["sample_id"]].append(
+                    row_a["sample_id"]
                 )
 
     for row in topology_rows:
-        unit_id = row["topology_unit_id"]
+        sample_id = row["sample_id"]
 
-        if unit_id in visited_unit_ids:
+        if sample_id in visited_sample_ids:
             continue
 
-        stack = [unit_id]
+        stack = [sample_id]
         component_ids = []
 
         while stack:
             current_id = stack.pop()
 
-            if current_id in visited_unit_ids:
+            if current_id in visited_sample_ids:
                 continue
 
-            visited_unit_ids.add(current_id)
+            visited_sample_ids.add(current_id)
             component_ids.append(current_id)
 
             for neighbor_id in neighbors[current_id]:
-                if neighbor_id not in visited_unit_ids:
+                if neighbor_id not in visited_sample_ids:
                     stack.append(neighbor_id)
 
         if len(component_ids) == 1:
