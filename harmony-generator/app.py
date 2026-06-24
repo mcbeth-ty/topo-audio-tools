@@ -14,9 +14,14 @@ import copy
 
 import os
 
+try:
+    streamlit_demo_secret = str(st.secrets.get("TOPO_AUDIO_DEMO", "false")).lower()
+except Exception:
+    streamlit_demo_secret = "false"
+
 DEMO_MODE = (
     os.getenv("TOPO_AUDIO_DEMO", "false").lower() == "true"
-    or str(st.secrets.get("TOPO_AUDIO_DEMO", "false")).lower() == "true"
+    or streamlit_demo_secret == "true"
 )
 
 st.markdown("""
