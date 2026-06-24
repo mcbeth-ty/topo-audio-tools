@@ -12,6 +12,10 @@ const METHODOLOGY_CONFIG = {
     tonic_drone_enabled: false
   },
 
+  vector_v2: {
+    tonic_drone_enabled: false
+  },
+
   line_v2: {
     tonic_drone_enabled: false
   }
@@ -22,7 +26,7 @@ let trialStarted = false;
 
 document.body.classList.toggle(
   "vector-trial",
-  currentMethodology === "vector_v1"
+  isVectorMethodology()
 );
 
 const methodologyOptions = document.querySelectorAll(".methodology-option");
@@ -40,10 +44,11 @@ methodologyOptions.forEach((option) => {
 
     document.body.classList.toggle(
       "vector-trial",
-      currentMethodology === "vector_v1"
+      isVectorMethodology()
     );
 
     updateInstructions();
+    updateAxisLabels();
 
   });
 });
@@ -100,6 +105,7 @@ Adjust vectors until they most accurately reflect the feeling of each sample rel
 `;
 
 updateInstructions();
+updateAxisLabels();
 
 instructionsToggle.addEventListener("click", () => {
   instructions.classList.toggle("visible");
@@ -200,7 +206,7 @@ function createAudioLine(file, x, y) {
   let start;
   let end;
 
-  if (currentMethodology === "vector_v1") {
+  if (isVectorMethodology()) {
 
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
@@ -239,7 +245,7 @@ function createAudioLine(file, x, y) {
     locked: false
   };
 
-  if (currentMethodology === "vector_v1") {
+  if (isVectorMethodology()) {
     group.classList.add("vector-mode");
   }
 
@@ -259,7 +265,7 @@ function createAudioLine(file, x, y) {
 
   updateLine();
 
-  if (currentMethodology !== "vector_v1") {
+  if (isVectorMethodology()) {
 
     makeHandleDraggable(startHandle, (newX, newY) => {
       start.x = newX;
@@ -275,7 +281,7 @@ function createAudioLine(file, x, y) {
 
   }
 
-  if (currentMethodology !== "vector_v1") {
+  if (isVectorMethodology()) {
 
     makeLineDraggable(line, (dx, dy) => {
       start.x += dx;
@@ -289,7 +295,7 @@ function createAudioLine(file, x, y) {
 
   }
 
-  if (currentMethodology === "vector_v1") {
+  if (isVectorMethodology()) {
     makeVectorEditable(line, group, lineData, updateLine, togglePlayback);
   } else {
     line.addEventListener("click", togglePlayback);
@@ -376,7 +382,7 @@ function createAudioLine(file, x, y) {
     endLabel.style.left = end.x + 12 + "px";
     endLabel.style.top = end.y - 8 + "px";
 
-    if (currentMethodology === "vector_v1") {
+    if (isVectorMethodology()) {
 
       centerGroup.style.left = end.x + 16 + "px";
       centerGroup.style.top = end.y + "px";
@@ -402,7 +408,7 @@ function createAudioLine(file, x, y) {
     let dotStartX = start.x;
     let dotStartY = start.y;
 
-    if (currentMethodology === "vector_v1") {
+    if (isVectorMethodology()) {
       dotStartX = window.innerWidth / 2;
       dotStartY = window.innerHeight / 2;
     }
@@ -425,7 +431,7 @@ function createAudioLine(file, x, y) {
   function resetMotionDot() {
     motionDot.style.transition = "none";
 
-    if (currentMethodology === "vector_v1") {
+    if (isVectorMethodology()) {
       motionDot.style.left = window.innerWidth / 2 + "px";
       motionDot.style.top = window.innerHeight / 2 + "px";
     } else {
@@ -748,8 +754,15 @@ function buildExportData() {
           ? "2-point Line"
           : "Center-pinned Vector",
 
-      x_axis_definition: "stability",
-      y_axis_definition: "positive/light to dark/negative"
+      x_axis_definition:
+        currentMethodology === "vector_v2"
+          ? "departing_destabilizing_to_arriving_stabilizing"
+          : "stability",
+
+      y_axis_definition:
+        currentMethodology === "vector_v2"
+          ? "negative_to_positive"
+          : "positive/light_to_dark/negative",
     },
 
     mapping_observations: allAudioLines.map((line, index) => {
@@ -765,7 +778,7 @@ function buildExportData() {
       const vectorMaxRadius = getVectorMaxRadius();
 
       const strengthNorm =
-        currentMethodology === "vector_v1"
+        isVectorMethodology()
           ? halfLengthPixels / vectorMaxRadius
           : null;
 
@@ -773,14 +786,24 @@ function buildExportData() {
       const unitY = Math.sin(angleRad);
 
       const vectorDeltaX =
-        currentMethodology === "vector_v1"
+        isVectorMethodology()
           ? unitX * strengthNorm
           : null;
 
       const vectorDeltaY =
-        currentMethodology === "vector_v1"
+        isVectorMethodology()
           ? unitY * strengthNorm
-          : null;      
+          : null;  
+
+      const deltaArrival =
+        currentMethodology === "vector_v2"
+          ? vectorDeltaX
+          : null;
+
+      const deltaValence =
+        currentMethodology === "vector_v2"
+          ? vectorDeltaY
+          : null;
 
       const lengthPixels =
         currentMethodology === "vector_v1"
@@ -814,21 +837,53 @@ function buildExportData() {
         angle_rad: angleRad,
 
         vector_unit_x:
-          currentMethodology === "vector_v1" ? unitX : null,
+          isVectorMethodology() ? unitX : null,
 
         vector_unit_y:
-          currentMethodology === "vector_v1" ? unitY : null,
+          isVectorMethodology() ? unitY : null,
 
         strength_norm:
-          currentMethodology === "vector_v1" ? strengthNorm : null,
+          isVectorMethodology() ? strengthNorm : null,
 
         vector_delta_x:
-          currentMethodology === "vector_v1" ? vectorDeltaX : null,
+          isVectorMethodology() ? vectorDeltaX : null,
 
         vector_delta_y:
-          currentMethodology === "vector_v1" ? vectorDeltaY : null,          
+          isVectorMethodology() ? vectorDeltaY : null,
+
+        delta_arrival:
+          currentMethodology === "vector_v2" ? deltaArrival : null,
+
+        delta_valence:
+          currentMethodology === "vector_v2" ? deltaValence : null,
+
+        departure_arrival_label:
+          currentMethodology === "vector_v2"
+            ? getArrivalExportLabel(deltaArrival)
+            : null,
+
+        valence_label:
+          currentMethodology === "vector_v2"
+            ? getValenceExportLabel(deltaValence)
+            : null,
+
+        movement_ambiguous:
+          currentMethodology === "vector_v2"
+            ? strengthNorm < 0.08
+            : null,
+
+        semantic_axes:
+          currentMethodology === "vector_v2"
+            ? {
+                x_negative: "departing_destabilizing",
+                x_positive: "arriving_stabilizing",
+                y_negative: "more_negative",
+                y_positive: "more_positive"
+              }
+            : null,
+
         full_display_length_pixels:
-          currentMethodology === "vector_v1" ? fullLengthPixels : null,
+          isVectorMethodology() ? fullLengthPixels : null,
 
         locked: line.locked
       };
@@ -1014,6 +1069,14 @@ function getStrengthLabel(lineData) {
 }
 
 function buildVectorReadout(lineData) {
+  if (currentMethodology === "vector_v2") {
+    return buildVectorV2Readout(lineData);
+  }
+
+  return buildVectorV1Readout(lineData);
+}
+
+function buildVectorV1Readout(lineData) {
   const angle = getLineAngleRadians(lineData);
 
   const strength =
@@ -1043,6 +1106,74 @@ function buildVectorReadout(lineData) {
   if (stabilityLabel) lines.push(stabilityLabel);
 
   return lines.join("<br>");
+}
+
+function buildVectorV2Readout(lineData) {
+  const angle = getLineAngleRadians(lineData);
+
+  const strength =
+    getLineLength(lineData) / 2 / getVectorMaxRadius();
+
+  if (strength < 0.08) {
+    return "AMBIGUOUS";
+  }
+
+  const unitX = Math.cos(angle);
+  const unitY = Math.sin(angle);
+
+  const arrivalValue = unitX * strength;
+
+  // screen-y is positive downward, so invert it:
+  // top = negative, bottom = positive
+  const valenceValue = unitY * strength;
+
+  const lines = [];
+
+  const arrivalLabel = getArrivalComponentLabel(arrivalValue);
+  const valenceLabel = getValenceComponentLabel(valenceValue);
+
+  if (arrivalLabel) lines.push(arrivalLabel);
+  if (valenceLabel) lines.push(valenceLabel);
+
+  if (lines.length === 0) {
+    return "AMBIGUOUS";
+  }
+
+  return lines.join("<br>");
+}
+
+function getArrivalComponentLabel(value) {
+  const magnitude = Math.abs(value);
+
+  if (magnitude < 0.08) {
+    return "NO DETECTABLE DEPARTURE / ARRIVAL; CONTINUOUS";
+  }
+
+  const direction =
+    value > 0
+      ? "SENSE OF ARRIVAL"
+      : "SENSE OF DEPARTURE";
+
+  if (magnitude < 0.35) return `SLIGHT ${direction}`;
+  if (magnitude < 0.65) return `MODERATE ${direction}`;
+  return `STRONG ${direction}`;
+}
+
+function getValenceComponentLabel(value) {
+  const magnitude = Math.abs(value);
+
+  if (magnitude < 0.08) {
+    return "NO DETECTABLE MOVEMENT IN VALENCE";
+  }
+
+  const direction =
+    value > 0
+      ? "MORE POSITIVE"
+      : "MORE NEGATIVE";
+
+  if (magnitude < 0.35) return `SLIGHTLY ${direction}`;
+  if (magnitude < 0.65) return `MODERATELY ${direction}`;
+  return `STRONGLY ${direction}`;
 }
 
 function showVectorReadout(text) {
@@ -1103,4 +1234,60 @@ function currentMethodologyUsesTonicDrone() {
   return (
     METHODOLOGY_CONFIG[currentMethodology]?.tonic_drone_enabled === true
   );
+}
+
+function isVectorMethodology() {
+  return (
+    currentMethodology === "vector_v1" ||
+    currentMethodology === "vector_v2"
+  );
+}
+
+function updateAxisLabels() {
+  const topLabel = document.querySelector(".axis-label.top");
+  const bottomLabel = document.querySelector(".axis-label.bottom");
+  const leftLabel = document.querySelector(".axis-label.left");
+  const rightLabel = document.querySelector(".axis-label.right");
+
+  if (currentMethodology === "vector_v2") {
+    topLabel.textContent = "Negative";
+    bottomLabel.textContent = "Positive";
+    leftLabel.textContent = "Departing / Destabilizing";
+    rightLabel.textContent = "Arriving / Stabilizing";
+  } else {
+    topLabel.textContent = "Light / Open / Positive";
+    bottomLabel.textContent = "Dark / Negative";
+    leftLabel.textContent = "Stable";
+    rightLabel.textContent = "Unstable";
+  }
+}
+
+function getArrivalExportLabel(value) {
+  const magnitude = Math.abs(value);
+
+  if (magnitude < 0.08) return "continuous";
+  if (value > 0) {
+    if (magnitude < 0.35) return "slight_arrival";
+    if (magnitude < 0.65) return "moderate_arrival";
+    return "strong_arrival";
+  }
+
+  if (magnitude < 0.35) return "slight_departure";
+  if (magnitude < 0.65) return "moderate_departure";
+  return "strong_departure";
+}
+
+function getValenceExportLabel(value) {
+  const magnitude = Math.abs(value);
+
+  if (magnitude < 0.08) return "no_detectable_valence_movement";
+  if (value > 0) {
+    if (magnitude < 0.35) return "slightly_more_positive";
+    if (magnitude < 0.65) return "moderately_more_positive";
+    return "strongly_more_positive";
+  }
+
+  if (magnitude < 0.35) return "slightly_more_negative";
+  if (magnitude < 0.65) return "moderately_more_negative";
+  return "strongly_more_negative";
 }

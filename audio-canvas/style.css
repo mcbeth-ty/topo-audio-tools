@@ -386,9 +386,8 @@ body.trial-started .methodology-option.selected {
   left: 50%;
   top: 50%;
 
-  width: min(76vw, 76vh);
-  height: min(76vw, 76vh);
-
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
   transform: translate(-50%, -50%);
 
   pointer-events: none;
