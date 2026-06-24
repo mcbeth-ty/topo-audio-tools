@@ -14,7 +14,10 @@ import copy
 
 import os
 
-DEMO_MODE = os.getenv("TOPO_AUDIO_DEMO", "false").lower() == "true"
+DEMO_MODE = (
+    os.getenv("TOPO_AUDIO_DEMO", "false").lower() == "true"
+    or str(st.secrets.get("TOPO_AUDIO_DEMO", "false")).lower() == "true"
+)
 
 st.markdown("""
 <style>
