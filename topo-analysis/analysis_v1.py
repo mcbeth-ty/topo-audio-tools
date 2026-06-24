@@ -366,14 +366,32 @@ def scan_archive():
                     e1 = sample["events"][0]
                     e2 = sample["events"][1]
 
+                    e1_numeric_degree = e1.get(
+                        "scale_degree",
+                        e1.get("root_semitone", e1.get("root_degree", "UNKNOWN"))
+                    )
+
+                    e2_numeric_degree = e2.get(
+                        "scale_degree",
+                        e2.get("root_semitone", e2.get("root_degree", "UNKNOWN"))
+                    )
+
+                    e1_label = e1.get(
+                        "display_label",
+                        e1.get("roman_numeral", e1.get("root_degree", str(e1_numeric_degree)))
+                    )
+
+                    e2_label = e2.get(
+                        "display_label",
+                        e2.get("roman_numeral", e2.get("root_degree", str(e2_numeric_degree)))
+                    )
+
                     numeric_degree_transition = (
-                        f'{e1["scale_degree"]}->{e2["scale_degree"]}'
+                        f"{e1_numeric_degree}->{e2_numeric_degree}"
                     )
 
                     roman_transition = (
-                        f'{e1.get("roman_numeral", e1["scale_degree"])}'
-                        f'→'
-                        f'{e2.get("roman_numeral", e2["scale_degree"])}'
+                        f"{e1_label}→{e2_label}"
                     )
 
                     if methodology_id == "vector_v1":
