@@ -23,7 +23,11 @@ ARCHIVE_DIR = BASE_DIR / "archive"
 DEMO_ARCHIVE_DIR = BASE_DIR / "demo_archive"
 
 SAMPLE_SETS_DIR = ARCHIVE_DIR / "sample_sets"
-AUDIO_DIR = ARCHIVE_DIR / "audio"
+AUDIO_DIR = (
+    DEMO_ARCHIVE_DIR / "audio"
+    if DEMO_MODE
+    else ARCHIVE_DIR / "audio"
+)
 
 PARTICIPANT_TRIALS_DIR = (
     DEMO_ARCHIVE_DIR / "participant_trials"
@@ -403,6 +407,25 @@ def get_sample_set_id(sample_id):
 def find_sampleset_file(sample_set_id):
     return SAMPLE_SETS_DIR / f"{sample_set_id}_sampleset.json"
 
+def find_audio_file(sample_id):
+    sample_set_id = get_sample_set_id(sample_id)
+
+    candidates = [
+        AUDIO_DIR / sample_set_id / f"{sample_id}.wav",
+        AUDIO_DIR / f"{sample_id}.wav",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    matches = list(AUDIO_DIR.glob(f"**/{sample_id}.wav"))
+
+    if matches:
+        return matches[0]
+
+    return AUDIO_DIR / sample_set_id / f"{sample_id}.wav"
+
 def scan_archive():
     sample_set_files = list(SAMPLE_SETS_DIR.glob("*_sampleset.json"))
     mapping_files = list(PARTICIPANT_TRIALS_DIR.glob("**/*.json"))
@@ -594,11 +617,7 @@ def scan_archive():
                         "sample_set_id": get_sample_set_id(sample_id),
                         "sample_id": sample_id,
 
-                        "audio_path": str(
-                            AUDIO_DIR
-                            / get_sample_set_id(sample_id)
-                            / f"{sample_id}.wav"
-                        ),                        
+                        "audio_path": str(find_audio_file(sample_id)),                   
 
                         "degree_transition": roman_transition,
                         "numeric_degree_transition": numeric_degree_transition,
