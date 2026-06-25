@@ -15,7 +15,9 @@ pio.templates.default = "plotly_dark"
 
 BASE_DIR = Path(__file__).parent
 
-DEMO_MODE = True
+import streamlit as st
+
+DEMO_MODE = str(st.secrets.get("TOPO_EXPLORER_DEMO", "false")).lower() == "true"
 
 ARCHIVE_DIR = BASE_DIR / "archive"
 DEMO_ARCHIVE_DIR = BASE_DIR / "demo_archive"

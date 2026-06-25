@@ -33,7 +33,7 @@ from analysis_v1 import (
     OUTPUT_DIR
 )
 
-DEMO_MODE = True
+DEMO_MODE = str(st.secrets.get("TOPO_EXPLORER_DEMO", "false")).lower() == "true"
 
 def set_latent_axis_angle(angle):
     st.session_state["latent_axis_angle"] = angle

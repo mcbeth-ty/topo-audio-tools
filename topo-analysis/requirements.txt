@@ -1,0 +1,8 @@
+streamlit
+streamlit-plotly-events
+plotly
+scikit-learn
+scipy
+numpy
+matplotlib
+soundfile
