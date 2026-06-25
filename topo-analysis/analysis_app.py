@@ -33,6 +33,8 @@ from analysis_v1 import (
     OUTPUT_DIR
 )
 
+DEMO_MODE = True
+
 def set_latent_axis_angle(angle):
     st.session_state["latent_axis_angle"] = angle
 
@@ -475,6 +477,12 @@ rows = scan_archive()
 available_methodologies = sorted(
     set(row["methodology_id"] for row in rows)
 )
+if DEMO_MODE:
+    available_methodologies = [
+        methodology
+        for methodology in available_methodologies
+        if methodology == "vector_v2"
+    ]
 
 available_sample_sets = sorted(
     set(row["sample_set_id"] for row in rows)
@@ -490,19 +498,28 @@ available_temporal_scales = sorted(
 st.sidebar.header("Analysis Scope")
 
 
-participant_number = st.sidebar.text_input(
-    "Participant Number",
-    value=""
-)
+if DEMO_MODE:
+    participant_number = st.sidebar.text_input(
+        "Participant Number",
+        value="",
+        disabled=True
+    )
+    participant_filter = None
+    st.sidebar.caption("Disabled in demo mode")
+else:
+    participant_number = st.sidebar.text_input(
+        "Participant Number",
+        value=""
+    )
 
-participant_filter = None
+    participant_filter = None
 
-if participant_number.strip():
-    try:
-        participant_filter = f"P{int(participant_number):03d}"
-    except ValueError:
-        st.sidebar.error("Participant number must be numeric.")
-        participant_filter = "__INVALID__"
+    if participant_number.strip():
+        try:
+            participant_filter = f"P{int(participant_number):03d}"
+        except ValueError:
+            st.sidebar.error("Participant number must be numeric.")
+            participant_filter = "__INVALID__"
 
 st.sidebar.caption(
     f"Participant ID: {participant_filter or 'ALL'}"
@@ -513,38 +530,67 @@ if not available_methodologies:
     st.stop()
 
 preferred_methodology = (
-    "line_v1"
-    if "line_v1" in available_methodologies
+    "vector_v2"
+    if "vector_v2" in available_methodologies
     else available_methodologies[0]
 )
 
-methodology_choice = st.sidebar.selectbox(
-    "Methodology",
-    options=available_methodologies,
-    index=available_methodologies.index(preferred_methodology),
-    help=(
-        "Choose exactly one mapping methodology. Mixed-method topology "
-        "combination is intentionally disabled for now."
+if DEMO_MODE:
+    methodology_filter = "vector_v2"
+    st.sidebar.caption("Methodology: vector_v2")
+else:
+    methodology_choice = st.sidebar.selectbox(
+        "Methodology",
+        options=available_methodologies,
+        index=available_methodologies.index(preferred_methodology),
+        help=(
+            "Choose exactly one mapping methodology. Mixed-method topology "
+            "combination is intentionally disabled for now."
+        )
     )
-)
 
-methodology_filter = methodology_choice
+    methodology_filter = methodology_choice
 
-temporal_scale_choice = st.sidebar.selectbox(
-    "Temporal Scale",
-    options=available_temporal_scales,
-    index=(
-        available_temporal_scales.index("Local Scale")
+
+if DEMO_MODE:
+    temporal_scale_choice = (
+        "Local Scale"
         if "Local Scale" in available_temporal_scales
-        else 0
+        else available_temporal_scales[0]
     )
-)
+    st.sidebar.selectbox(
+        "Temporal Scale",
+        options=[temporal_scale_choice],
+        index=0,
+        disabled=True
+    )
+    st.sidebar.caption("Disabled in demo mode")
+else:
+    temporal_scale_choice = st.sidebar.selectbox(
+        "Temporal Scale",
+        options=available_temporal_scales,
+        index=(
+            available_temporal_scales.index("Local Scale")
+            if "Local Scale" in available_temporal_scales
+            else 0
+        )
+    )
 
-sample_set_choices = st.sidebar.multiselect(
-    "Sample Sets",
-    options=["ALL"] + available_sample_sets,
-    default=["ALL"]
-)
+if DEMO_MODE:
+    sample_set_filter = None
+    st.sidebar.multiselect(
+        "Sample Sets",
+        options=["ALL"],
+        default=["ALL"],
+        disabled=True
+    )
+    st.sidebar.caption("Disabled in demo mode")
+else:
+    sample_set_choices = st.sidebar.multiselect(
+        "Sample Sets",
+        options=["ALL"] + available_sample_sets,
+        default=["ALL"]
+    )
 
 available_trial_sets = sorted(
     set(row["trial_id"] for row in rows)
@@ -567,18 +613,27 @@ if "ALL" in trial_set_choices:
 else:
     trial_set_filter = trial_set_choices
 
-if "ALL" in sample_set_choices and len(sample_set_choices) > 1:
-    sample_set_choices = [
-        choice for choice in sample_set_choices
-        if choice != "ALL"
-    ]
-
-if "ALL" in sample_set_choices:
+if DEMO_MODE:
     sample_set_filter = None
 else:
-    sample_set_filter = sample_set_choices
+    if "ALL" in sample_set_choices and len(sample_set_choices) > 1:
+        sample_set_choices = [
+            choice for choice in sample_set_choices
+            if choice != "ALL"
+        ]
 
-if st.sidebar.button("Run Analysis"):
+    if "ALL" in sample_set_choices:
+        sample_set_filter = None
+    else:
+        sample_set_filter = sample_set_choices
+
+if DEMO_MODE and "demo_initialized" not in st.session_state:
+    run_analysis = True
+    st.session_state["demo_initialized"] = True
+else:
+    run_analysis = st.sidebar.button("Run Analysis")
+
+if run_analysis:
 
     filters = {
         "participant_id": participant_filter or None,
@@ -816,20 +871,24 @@ if "filtered_rows" in st.session_state:
             """
         )
 
-        topology_unit = st.radio(
-            "Topology Unit",
-            options=[
-                "Sample Aggregate",
-                "Participant-Sample",
-                "Observation"
-            ],
-            horizontal=True,
-            help=(
-                "Controls whether repeated samples are collapsed before MDS. "
-                "Sample Aggregate is best for a collective sample topology; "
-                "Observation is best for raw response clouds."
+        if DEMO_MODE:
+            topology_unit = "Sample Aggregate"
+            st.caption("Topology Unit: Sample Aggregate")
+        else:
+            topology_unit = st.radio(
+                "Topology Unit",
+                options=[
+                    "Sample Aggregate",
+                    "Participant-Sample",
+                    "Observation"
+                ],
+                horizontal=True,
+                help=(
+                    "Controls whether repeated samples are collapsed before MDS. "
+                    "Sample Aggregate is best for a collective sample topology; "
+                    "Observation is best for raw response clouds."
+                )
             )
-        )
 
         n_components = 2
 
@@ -907,13 +966,14 @@ if "filtered_rows" in st.session_state:
             "Topology Mode",
             options=[
                 "Latent Axis Explorer",
-                "Clustering Explorer"
+                "Clustering Explorer",
             ],
+            index=1 if DEMO_MODE else 0,
             horizontal=True,
             help=(
                 "Switch between interpretive-axis analysis and proximity-based "
                 "group visualization. Both modes use the same topology point cloud."
-            )
+            ),
         )
 
         if topology_mode == "Latent Axis Explorer":
@@ -1304,26 +1364,26 @@ if "filtered_rows" in st.session_state:
         )
 
 
+    if not DEMO_MODE:
+        section_anchor("Export", level=2)
+        st.markdown("## EXPORT")
 
-    section_anchor("Export", level=2)
-    st.markdown("## EXPORT")
+        with st.expander("Export Results", expanded=False):
+            export_joined = st.checkbox("Joined dataset", value=True)
+            export_transition = st.checkbox("Transition summary", value=True)
+            export_sample = st.checkbox("Sample summary", value=True)
 
-    with st.expander("Export Results", expanded=False):
-        export_joined = st.checkbox("Joined dataset", value=True)
-        export_transition = st.checkbox("Transition summary", value=True)
-        export_sample = st.checkbox("Sample summary", value=True)
+            if st.button("Export Selected CSVs"):
 
-        if st.button("Export Selected CSVs"):
+                if export_joined:
+                    export_joined_rows(filtered_rows)
 
-            if export_joined:
-                export_joined_rows(filtered_rows)
+                if export_transition:
+                    export_transition_summary(filtered_rows)
 
-            if export_transition:
-                export_transition_summary(filtered_rows)
+                if export_sample:
+                    export_sample_summary(filtered_rows)
 
-            if export_sample:
-                export_sample_summary(filtered_rows)
+                st.success("Selected CSV results exported to output folder.")
 
-            st.success("Selected CSV results exported to output folder.")
-
-    render_sidebar_toc()
+        render_sidebar_toc()

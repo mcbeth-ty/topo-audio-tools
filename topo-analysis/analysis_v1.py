@@ -15,11 +15,19 @@ pio.templates.default = "plotly_dark"
 
 BASE_DIR = Path(__file__).parent
 
-ARCHIVE_DIR = BASE_DIR / "archive"
-SAMPLE_SETS_DIR = ARCHIVE_DIR / "sample_sets"
-PARTICIPANT_TRIALS_DIR = ARCHIVE_DIR / "participant_trials"
+DEMO_MODE = True
 
+ARCHIVE_DIR = BASE_DIR / "archive"
+DEMO_ARCHIVE_DIR = BASE_DIR / "demo_archive"
+
+SAMPLE_SETS_DIR = ARCHIVE_DIR / "sample_sets"
 AUDIO_DIR = ARCHIVE_DIR / "audio"
+
+PARTICIPANT_TRIALS_DIR = (
+    DEMO_ARCHIVE_DIR / "participant_trials"
+    if DEMO_MODE
+    else ARCHIVE_DIR / "participant_trials"
+)
 
 OUTPUT_DIR = BASE_DIR / "output"
 
@@ -395,7 +403,7 @@ def find_sampleset_file(sample_set_id):
 
 def scan_archive():
     sample_set_files = list(SAMPLE_SETS_DIR.glob("*_sampleset.json"))
-    mapping_files = list(PARTICIPANT_TRIALS_DIR.glob("*/*/*.json"))
+    mapping_files = list(PARTICIPANT_TRIALS_DIR.glob("**/*.json"))
 
     rows = []
 
