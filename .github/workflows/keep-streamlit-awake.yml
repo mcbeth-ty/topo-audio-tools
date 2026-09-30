@@ -2,22 +2,83 @@ name: Keep Streamlit Apps Awake
 
 on:
   schedule:
-    - cron: "0 */10 * * *"
+    # Run every 6 hours.
+    - cron: "17 */6 * * *"
   workflow_dispatch:
 
 jobs:
-  empty-commit:
+  keep-awake:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
+    timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Create empty commit
+      - name: Install Playwright
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git commit --allow-empty -m "Keep Streamlit apps awake"
-          git push
+          npm init -y
+          npm install playwright
+          npx playwright install --with-deps chromium
+
+      - name: Visit Streamlit apps
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+
+          const apps = [
+            {
+              name: 'Harmonic Sequence Generator',
+              url: 'https://harmonic-sequence-demo.streamlit.app/'
+            },
+            {
+              name: 'Topology Explorer',
+              url: 'https://topo-explorer.streamlit.app/'
+            }
+          ];
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const context = await browser.newContext();
+
+            let failed = false;
+
+            for (const app of apps) {
+              console.log(`\nVisiting ${app.name}...`);
+
+              const page = await context.newPage();
+
+              try {
+                const response = await page.goto(app.url, {
+                  waitUntil: 'domcontentloaded',
+                  timeout: 120000
+                });
+
+                if (!response) {
+                  throw new Error('No HTTP response received');
+                }
+
+                console.log(`HTTP status: ${response.status()}`);
+
+                if (!response.ok()) {
+                  throw new Error(`HTTP ${response.status()}`);
+                }
+
+                // Give Streamlit time to establish a real browser session,
+                // including its WebSocket connection and any wake-up process.
+                await page.waitForTimeout(30000);
+
+                console.log(`${app.name}: visit completed successfully`);
+              } catch (error) {
+                failed = true;
+                console.error(`${app.name}: FAILED`);
+                console.error(error);
+              } finally {
+                await page.close();
+              }
+            }
+
+            await browser.close();
+
+            if (failed) {
+              process.exit(1);
+            }
+          })();
+          EOF
