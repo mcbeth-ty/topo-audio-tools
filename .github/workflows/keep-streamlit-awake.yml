@@ -36,29 +36,40 @@ jobs:
 
           async function verify(page, app) {
             let wakeClicks = 0;
-            const deadline = Date.now() + 150000;
+            const deadline = Date.now() + 90000;
             await page.goto(app.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
             while (Date.now() < deadline) {
-              const button = page.getByRole('button', { name: sleepButton });
-              if (await button.count() && await button.first().isVisible()) {
-                console.log(`${app.name}: sleep screen detected; clicking wake button`);
-                await button.first().click({ timeout: 10000 });
+              const frames = page.frames();
+              let markerFound = false;
+              let sleeping = false;
+              let wakeButton = null;
+              for (const frame of frames) {
+                const content = await frame.evaluate(() => document.body?.innerText || '').catch(() => '');
+                if (content.toLowerCase().includes(app.marker.toLowerCase())) markerFound = true;
+                if (sleepText.test(content)) sleeping = true;
+                const button = frame.getByRole('button', { name: sleepButton });
+                if (await button.count().catch(() => 0) && await button.first().isVisible().catch(() => false)) wakeButton = button.first();
+              }
+              if (wakeButton) {
+                console.log(`${app.name}: sleep screen detected, clicking wake button`);
+                await wakeButton.click({ timeout: 10000 });
                 wakeClicks++;
-                await wait(10000);
+                await wait(8000);
                 continue;
               }
-              // Verify unique visible content from the real application, rather
-              // than relying on Streamlit's version-dependent DOM test IDs.
-              const marker = page.getByText(app.marker, { exact: false }).first();
-              const sleeping = await page.getByText(sleepText).count();
-              if (!sleeping && await marker.isVisible().catch(() => false)) {
-                console.log(`${app.name}: VERIFIED application content (wake clicks: ${wakeClicks})`);
+              if (markerFound && !sleeping) {
+                console.log(`${app.name}: VERIFIED rendered content across ${frames.length} frame(s) (wake clicks: ${wakeClicks})`);
                 await page.screenshot({ path: `diagnostics/${app.slug}-success.png`, fullPage: true });
                 return;
               }
+              console.log(`${app.name}: waiting (frames: ${frames.length}, marker: ${markerFound}, sleep: ${sleeping})`);
               await wait(5000);
             }
-            throw new Error(`No verified Streamlit interface after 150 seconds (wake clicks: ${wakeClicks})`);
+            for (const [i, frame] of page.frames().entries()) {
+              const details = await frame.evaluate(() => ({ text: (document.body?.innerText || '').slice(0, 3000), html: document.body?.outerHTML.slice(0, 500) })).catch(e => ({ error: String(e) }));
+              fs.writeFileSync(`diagnostics/${app.slug}-frame-${i}.json`, JSON.stringify({ url: frame.url(), ...details }, null, 2));
+            }
+            throw new Error(`No verified application content after 90 seconds (wake clicks: ${wakeClicks})`);
           }
 
           (async () => {
