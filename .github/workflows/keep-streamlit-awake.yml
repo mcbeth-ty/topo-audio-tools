@@ -27,8 +27,8 @@ jobs:
           fs.mkdirSync('diagnostics', { recursive: true });
 
           const apps = [
-            { name: 'Harmonic Sequence Generator', slug: 'harmonic-sequence', url: 'https://harmonic-sequence-demo.streamlit.app/' },
-            { name: 'Topology Explorer', slug: 'topology-explorer', url: 'https://topo-explorer.streamlit.app/' }
+            { name: 'Harmonic Sequence Generator', slug: 'harmonic-sequence', url: 'https://harmonic-sequence-demo.streamlit.app/', marker: 'HARMONIC SEQUENCE SETTINGS' },
+            { name: 'Topology Explorer', slug: 'topology-explorer', url: 'https://topo-explorer.streamlit.app/', marker: 'DATASET SUMMARY' }
           ];
           const sleepButton = /Yes, get this app back up!/i;
           const sleepText = /This app has gone to sleep due to inactivity/i;
@@ -47,17 +47,14 @@ jobs:
                 await wait(10000);
                 continue;
               }
-              // Streamlit's app view must contain an actual rendered app element.
-              // The sleep page may return HTTP 200, so status alone is insufficient.
-              const appRoot = page.locator('[data-testid="stAppViewContainer"]');
-              if (await appRoot.count() && await appRoot.first().isVisible()) {
-                const content = await appRoot.innerText().catch(() => '');
-                const sleeping = await page.getByText(sleepText).count();
-                if (!sleeping && content.trim().length > 20) {
-                  console.log(`${app.name}: VERIFIED active Streamlit interface (wake clicks: ${wakeClicks})`);
-                  await page.screenshot({ path: `diagnostics/${app.slug}-success.png`, fullPage: true });
-                  return;
-                }
+              // Verify unique visible content from the real application, rather
+              // than relying on Streamlit's version-dependent DOM test IDs.
+              const marker = page.getByText(app.marker, { exact: false }).first();
+              const sleeping = await page.getByText(sleepText).count();
+              if (!sleeping && await marker.isVisible().catch(() => false)) {
+                console.log(`${app.name}: VERIFIED application content (wake clicks: ${wakeClicks})`);
+                await page.screenshot({ path: `diagnostics/${app.slug}-success.png`, fullPage: true });
+                return;
               }
               await wait(5000);
             }
