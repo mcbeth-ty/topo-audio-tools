@@ -2,83 +2,98 @@ name: Keep Streamlit Apps Awake
 
 on:
   schedule:
-    # Run every 6 hours.
-    - cron: "17 */6 * * *"
+    - cron: '17 */6 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   keep-awake:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 15
     steps:
       - name: Install Playwright
         run: |
-          npm init -y
-          npm install playwright
+          npm install --no-save playwright
           npx playwright install --with-deps chromium
 
-      - name: Visit Streamlit apps
+      - name: Visit and verify Streamlit apps
+        id: verify
         run: |
           node <<'EOF'
           const { chromium } = require('playwright');
+          const fs = require('fs');
+          fs.mkdirSync('diagnostics', { recursive: true });
 
           const apps = [
-            {
-              name: 'Harmonic Sequence Generator',
-              url: 'https://harmonic-sequence-demo.streamlit.app/'
-            },
-            {
-              name: 'Topology Explorer',
-              url: 'https://topo-explorer.streamlit.app/'
-            }
+            { name: 'Harmonic Sequence Generator', slug: 'harmonic-sequence', url: 'https://harmonic-sequence-demo.streamlit.app/' },
+            { name: 'Topology Explorer', slug: 'topology-explorer', url: 'https://topo-explorer.streamlit.app/' }
           ];
+          const sleepButton = /Yes, get this app back up!/i;
+          const sleepText = /This app has gone to sleep due to inactivity/i;
+          const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+          async function verify(page, app) {
+            let wakeClicks = 0;
+            const deadline = Date.now() + 150000;
+            await page.goto(app.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            while (Date.now() < deadline) {
+              const button = page.getByRole('button', { name: sleepButton });
+              if (await button.count() && await button.first().isVisible()) {
+                console.log(`${app.name}: sleep screen detected; clicking wake button`);
+                await button.first().click({ timeout: 10000 });
+                wakeClicks++;
+                await wait(10000);
+                continue;
+              }
+              // Streamlit's app view must contain an actual rendered app element.
+              // The sleep page may return HTTP 200, so status alone is insufficient.
+              const appRoot = page.locator('[data-testid="stAppViewContainer"]');
+              if (await appRoot.count() && await appRoot.first().isVisible()) {
+                const content = await appRoot.innerText().catch(() => '');
+                const sleeping = await page.getByText(sleepText).count();
+                if (!sleeping && content.trim().length > 20) {
+                  console.log(`${app.name}: VERIFIED active Streamlit interface (wake clicks: ${wakeClicks})`);
+                  await page.screenshot({ path: `diagnostics/${app.slug}-success.png`, fullPage: true });
+                  return;
+                }
+              }
+              await wait(5000);
+            }
+            throw new Error(`No verified Streamlit interface after 150 seconds (wake clicks: ${wakeClicks})`);
+          }
 
           (async () => {
             const browser = await chromium.launch({ headless: true });
-            const context = await browser.newContext();
-
-            let failed = false;
-
-            for (const app of apps) {
-              console.log(`\nVisiting ${app.name}...`);
-
-              const page = await context.newPage();
-
-              try {
-                const response = await page.goto(app.url, {
-                  waitUntil: 'domcontentloaded',
-                  timeout: 120000
-                });
-
-                if (!response) {
-                  throw new Error('No HTTP response received');
+            let failures = 0;
+            try {
+              for (const app of apps) {
+                console.log(`\nChecking ${app.name}`);
+                const page = await browser.newPage();
+                try {
+                  await verify(page, app);
+                } catch (error) {
+                  failures++;
+                  console.error(`${app.name}: FAILED: ${error.stack || error}`);
+                  await page.screenshot({ path: `diagnostics/${app.slug}-failure.png`, fullPage: true, timeout: 10000 }).catch(() => {});
+                  fs.writeFileSync(`diagnostics/${app.slug}-failure.txt`, String(error.stack || error));
+                } finally {
+                  await page.close();
                 }
-
-                console.log(`HTTP status: ${response.status()}`);
-
-                if (!response.ok()) {
-                  throw new Error(`HTTP ${response.status()}`);
-                }
-
-                // Give Streamlit time to establish a real browser session,
-                // including its WebSocket connection and any wake-up process.
-                await page.waitForTimeout(30000);
-
-                console.log(`${app.name}: visit completed successfully`);
-              } catch (error) {
-                failed = true;
-                console.error(`${app.name}: FAILED`);
-                console.error(error);
-              } finally {
-                await page.close();
               }
+            } finally {
+              await browser.close();
             }
-
-            await browser.close();
-
-            if (failed) {
-              process.exit(1);
-            }
-          })();
+            if (failures) process.exitCode = 1;
+          })().catch(error => { console.error(error); process.exitCode = 1; });
           EOF
+
+      - name: Upload diagnostic screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamlit-diagnostics
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7
