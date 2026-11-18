@@ -89,3 +89,11 @@
   max-height:none;
   aspect-ratio:auto;
 }
+
+.atlas-demo-root .atlas-model-next {width:190px;font-size:12px!important;}
+.atlas-model-next.atlas-next-cue {animation:atlas-next-flash 1.8s ease-in-out infinite;}
+@keyframes atlas-next-flash {
+  50% {background:#555e;box-shadow:0 0 0 2px #fff5,0 0 18px #fff6;filter:brightness(1.5);}
+}
+@media(max-width:700px) {.atlas-demo-root .atlas-model-next {width:150px;font-size:10px!important;}}
+@media(prefers-reduced-motion:reduce) {.atlas-model-next.atlas-next-cue {animation:none;outline:2px solid #ddd;outline-offset:3px;}}

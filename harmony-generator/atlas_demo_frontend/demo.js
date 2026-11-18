@@ -38,9 +38,11 @@ export default function({parentElement,data,setTriggerValue}){
     };
     if(data.section==='atlas'){
       state.cleanup.push(atlasSectionNav());
-      const previous=document.createElement('button'),next=document.createElement('button');previous.className='atlas-model-previous';next.className='atlas-model-next';previous.textContent='‹';next.innerHTML='<span>Next model</span><span aria-hidden="true">›</span>';previous.setAttribute('aria-label','Previous model');next.setAttribute('aria-label','Next model');previous.title='Previous model';next.title='Next model';shell.append(previous,next);
+      const previous=document.createElement('button'),next=document.createElement('button');previous.className='atlas-model-previous';next.className='atlas-model-next';previous.textContent='‹';next.innerHTML='<span>Next model / pathfinding</span><span aria-hidden="true">›</span>';previous.setAttribute('aria-label','Previous model');next.setAttribute('aria-label','Next model / pathfinding');previous.title='Previous model';next.title='Next model / pathfinding';shell.append(previous,next);
       const move=direction=>{const to=Math.max(0,Math.min(2,state.index+direction));if(to===state.index)return;shared.stop();state.index=to;if(!state.done&&to===1&&state.step==='intro'){state.step='tags';}else if(!state.done&&to!==1&&state.step!=='intro'){state.complete();}state.render();if(!state.done)state.showStep();};
-      previous.onclick=()=>move(-1);next.onclick=()=>move(1);
+      previous.onclick=()=>move(-1);next.onclick=()=>{clearTimeout(state.nextModelCue);next.classList.remove('atlas-next-cue');move(1);};
+      state.nextModelCue=setTimeout(()=>{if(!state.disposed&&state.index===0)next.classList.add('atlas-next-cue');},20000);
+      state.cleanup.push(()=>clearTimeout(state.nextModelCue));
       state.previous=previous;state.next=next;
       state.seedPath=()=>{
         if(state.pathSeeded)return;
