@@ -189,14 +189,8 @@ def main():
     .stApp {background:#0a0a0a;color:#ddd} .block-container {max-width:1500px!important;padding:clamp(16px,3vw,48px)!important}
     [data-testid="stMainBlockContainer"] {padding-top:28px!important}
     html,body,.stApp,h1,h2,p {font-family:Arial,Helvetica,sans-serif} h1 {font-size:clamp(28px,4vw,44px)!important} h2 {margin-top:12px!important}
-    .st-key-atlas_demo_intro {max-width:700px} .st-key-atlas_demo_intro p {font-size:12px;line-height:1.45;margin-bottom:6px}
-    .st-key-atlas_demo_intro [data-testid="stVerticalBlock"] {gap:6px}
     </style>''',unsafe_allow_html=True)
     st.title('Affective Atlas')
-    with st.container(key='atlas_demo_intro'):
-        st.write('Affective Atlas is an experimental environment for exploring the relationships between sounds and the emotions they evoke.')
-        st.write('By translating listening judgments into interactive spatial models, it allows us to navigate musical experiences through their perceived relationships rather than conventional musical categories.')
-        st.write('Explore the resulting sound landscapes, discover gradual transitions between different experiences, and investigate how musical relationships might be understood, organized, and eventually generated.')
     try:loaded=load_demo_models()
     except (OSError,ValueError,KeyError,TypeError) as error:
         st.error(str(error));st.stop()
