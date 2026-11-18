@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      AFFECTIVE_ATLAS_ASSET_CACHE: ${{ runner.temp }}/atlas-assets
+      AFFECTIVE_ATLAS_ASSET_CACHE: /tmp/affective-atlas-ci-assets
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,5 +34,5 @@ jobs:
       - run: python harmony-generator/tools/verify_cloud_demo.py
       - run: python -m unittest discover -s harmony-generator -p 'test_*.py'
         env:
-          AMBIENT_SF2_PATH: ${{ runner.temp }}/atlas-assets/GeneralUser-GS.sf2
+          AMBIENT_SF2_PATH: /tmp/affective-atlas-ci-assets/GeneralUser-GS.sf2
       - run: node harmony-generator/test_ambient_pathfinder.mjs
