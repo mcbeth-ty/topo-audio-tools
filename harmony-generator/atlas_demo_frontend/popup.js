@@ -6,14 +6,21 @@ function atlasPopup(root){
   const reveal=document.createElement('button');reveal.className='atlas-popup-reveal';reveal.textContent='Show all';reveal.title='Reveal remaining text';
   popup.append(close,title,body,reveal,actions);root.append(popup);
   let timer=null,text='',dismiss=null;
-  const finish=()=>{clearInterval(timer);body.textContent=text;reveal.hidden=true;};reveal.onclick=finish;
-  const hide=()=>{clearInterval(timer);popup.hidden=true;};close.onclick=()=>{hide();dismiss?.();};
+  const finish=()=>{cancelAnimationFrame(timer);body.textContent=text;reveal.hidden=true;};reveal.onclick=finish;
+  const hide=()=>{cancelAnimationFrame(timer);popup.hidden=true;};close.onclick=()=>{hide();dismiss?.();};
   return {element:popup,hide,show(heading,content,buttons=[],onDismiss=null){
-    clearInterval(timer);dismiss=onDismiss;text=content;title.textContent=heading;actions.replaceChildren();body.textContent='';
+    cancelAnimationFrame(timer);dismiss=onDismiss;text=content;title.textContent=heading;actions.replaceChildren();body.textContent='';
     for(const [label,callback] of buttons){const b=document.createElement('button');b.textContent=label;b.onclick=callback;actions.append(b);}
     popup.hidden=false;popup.classList.remove('atlas-popup-enter');void popup.offsetWidth;popup.classList.add('atlas-popup-enter');
     if(matchMedia('(prefers-reduced-motion:reduce)').matches){finish();return;}
-    let at=0;reveal.hidden=false;timer=setInterval(()=>{at+=5;body.textContent=text.slice(0,at);if(at>=text.length)finish();},18);
+    // Use elapsed time, not timer ticks: larger models must not slow the text.
+    const started=performance.now(),duration=1200;reveal.hidden=false;
+    const tick=now=>{
+      const progress=Math.min(1,(now-started)/duration);
+      body.textContent=text.slice(0,Math.ceil(text.length*progress));
+      if(progress>=1)finish();else timer=requestAnimationFrame(tick);
+    };
+    timer=requestAnimationFrame(tick);
   },dispose(){hide();popup.remove();}};
 }
 const ATLAS_TEXT={
