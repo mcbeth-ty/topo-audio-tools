@@ -1,4 +1,5 @@
 """Focused public-demo isolation and enforced rendering constraints."""
+import base64
 import copy
 import json
 import tempfile
@@ -9,6 +10,13 @@ import atlas_demo as demo
 
 
 class AtlasDemoTests(unittest.TestCase):
+    def test_audio_is_exact_and_independent_of_hosted_media_routes(self):
+        wav=b'RIFF'+bytes(range(256))*8
+        url=demo.audio_url(wav,'test')
+        self.assertTrue(url.startswith('data:audio/wav;base64,'))
+        self.assertEqual(base64.b64decode(url.split(',',1)[1]),wav)
+        self.assertEqual(demo.audio_url(wav,'another-id'),url)
+
     def test_public_snapshot_projection_is_read_only_and_minimal(self):
         model={'manifest':{'inventory':[{'stimulus_id':'private-id','metadata':{'private_recipe':True}}]},
                'fits':{'Ordinal:3D+color':{'embedding':{'coordinates':{'private-id':[1,2,3,4]}}}},

@@ -1,4 +1,5 @@
 """Read-only public Affective Atlas: snapshots in, session-local demos out."""
+import base64
 import copy
 import json
 import os
@@ -9,7 +10,6 @@ from uuid import uuid4
 
 import streamlit as st
 from streamlit.components.v2 import component
-from ambient_playback import audio_url
 from ambient_study_color import extend_color
 from ambient_preview import preview_audio
 from ambient_soundfont import soundfont_identity,render_soundfont_wav
@@ -49,6 +49,18 @@ def load_demo_models():
     for name in MODEL_NAMES:
         path=found[name];stat=path.stat();loaded.append(_read_model(str(path),stat.st_size,stat.st_mtime_ns))
     return loaded
+
+
+@st.cache_data(max_entries=8,show_spinner=False)
+def _inline_audio(wav):
+    # Cloud wraps the app under /~/+/. Raw media-manager URLs bypass its
+    # routing and can return HTML instead of WAVs. Keep on-demand audio in
+    # memory and independent of proxy paths, including cross-origin embeds.
+    return 'data:audio/wav;base64,'+base64.b64encode(wav).decode('ascii')
+
+
+def audio_url(wav, identity):
+    return _inline_audio(wav)
 
 
 def recipe_audio(metadata):
@@ -110,8 +122,6 @@ def _audio_response(section,key,identity,metadata):
     return {'key':key,'url':audio_url(cache[key],f'atlas-demo-{key}'),'request':uuid4().hex,'id':identity,'section':section}
 
 
-def _active_audio_urls():
-    return {key:audio_url(wav,f"atlas-demo-{key}") for key,wav in st.session_state.get("atlas_demo_audio",{}).items()}
 
 
 @st.fragment
@@ -126,7 +136,7 @@ def atlas_section(loaded):
         except (OSError,ValueError,KeyError,TypeError,RuntimeError,ImportError):st.session_state['atlas_demo_atlas_error']='This sound is temporarily unavailable.'
     demo_component()(key='atlas_demo_atlas',data={'section':'atlas','models':[item[0] for item in loaded],
         'response':st.session_state.get('atlas_demo_atlas_response'),'error':st.session_state.pop('atlas_demo_atlas_error',None),
-        'epoch':PUBLIC_EPOCH,'audio_urls':_active_audio_urls()},height='content',on_event_change=event)
+        'epoch':PUBLIC_EPOCH},height='content',on_event_change=event)
 
 
 @st.fragment
@@ -149,7 +159,7 @@ def arrange_section(model):
             except (OSError,ValueError,KeyError,TypeError,RuntimeError,ImportError):st.session_state['atlas_demo_arrange_error']='This sound is temporarily unavailable.'
     demo_component()(key='atlas_demo_arrange',data={'section':'arrange','ids':group,'round':st.session_state['atlas_demo_arrange_round'],
         'response':st.session_state.get('atlas_demo_arrange_response'),'error':st.session_state.pop('atlas_demo_arrange_error',None),
-        'epoch':PUBLIC_EPOCH,'audio_urls':_active_audio_urls()},height='content',on_event_change=event)
+        'epoch':PUBLIC_EPOCH},height='content',on_event_change=event)
 
 
 @st.fragment
