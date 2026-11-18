@@ -26,7 +26,7 @@ export default function({parentElement,data,setTriggerValue}){
       if(state.done)return;
       if(state.step==='intro')state.popup.show('',ATLAS_TEXT.intro,[],()=>{stop();state.render();});
       if(state.step==='tags')state.popup.show('Understanding tags',ATLAS_TEXT.tags,[['Reveal Tags',()=>{state.tags[1]=true;state.step='path';state.render();state.showStep();}],['Continue',()=>{state.step='path';state.showStep();}]],()=>{stop();state.render();});
-      if(state.step==='path'){shell.classList.add('atlas-path-highlight');state.popup.show('Finding paths between sounds',ATLAS_TEXT.path,[],()=>{stop();state.render();});}
+      if(state.step==='path'){state.seedPath();shell.classList.remove('atlas-path-highlight');state.popup.show('Finding paths between sounds',ATLAS_TEXT.path,[],()=>{stop();state.render();});}
       if(state.step==='usePath'){shell.classList.remove('atlas-path-highlight');state.popup.show('Create a path',ATLAS_TEXT.usePath,[],()=>{stop();state.render();});}
     };
     if(data.section==='atlas'){
@@ -34,9 +34,26 @@ export default function({parentElement,data,setTriggerValue}){
       const move=direction=>{const to=Math.max(0,Math.min(2,state.index+direction));if(to===state.index)return;shared.stop();state.index=to;if(!state.done&&to===1&&state.step==='intro'){state.step='tags';}else if(!state.done&&to!==1&&state.step!=='intro'){state.complete();}state.render();if(!state.done)state.showStep();};
       previous.onclick=()=>move(-1);next.onclick=()=>move(1);
       state.previous=previous;state.next=next;
+      state.seedPath=()=>{
+        if(state.pathSeeded)return;
+        const root=shell.querySelector('.study-root'),viewer=root?.__study;
+        const tags=state.data.models[state.index].tags;
+        const find=label=>Object.keys(tags).find(id=>tags[id].trim().toLowerCase()===label);
+        const start=find('anxiety'),end=find('airy and beautiful');
+        if(!viewer?.pathfinder||!start||!end)return;
+        state.seedingPath=true;
+        try{
+          const launcher=root.querySelector('.study-pathfinder-launch');
+          if(launcher.getAttribute('aria-expanded')!=='true')launcher.click();
+          root.querySelector('[aria-label="Choose start node"]').click();viewer.pathfinder.pick(start);
+          root.querySelector('[aria-label="Choose destination node"]').click();viewer.pathfinder.pick(end);
+          root.querySelector('.study-pathfinder-calculate').click();
+          state.pathSeeded=viewer.pathfinder.routes.length>0;
+        }finally{state.seedingPath=false;}
+      };
       const click=event=>{
-        if(state.done)return;
-        if(event.target.closest('.study-pathfinder-launch')&&state.step==='path'){
+        if(state.done||state.seedingPath)return;
+        if(event.target.closest('.study-pathfinder-picks button')&&state.step==='path'){
           state.step='usePath';state.showStep();
         }else if(event.target.closest('.study-pathfinder-calculate')&&state.step==='usePath'&&shell.querySelector('.study-root').__study?.pathfinder.routes.length){state.complete();}
       };shell.addEventListener('click',click);state.cleanup.push(()=>shell.removeEventListener('click',click));
@@ -53,6 +70,8 @@ export default function({parentElement,data,setTriggerValue}){
         const position=()=>{
           const box=svg.getBoundingClientRect(),parent=shell.getBoundingClientRect();
           state.popup.element.style.top=`${box.top-parent.top+40}px`;state.previous.style.top=state.next.style.top=`${box.top-parent.top+box.height/2}px`;
+          const arrow=shell.querySelector('.atlas-section-arrow');
+          if(arrow)arrow.style.top=`${box.bottom-parent.top-22}px`;
         };position();
         if(state.viewport!==svg){state.viewportObserver?.disconnect();state.viewport=svg;state.viewportObserver=new ResizeObserver(position);state.viewportObserver.observe(svg);}
         if(!state.viewed){state.viewed=true;requestAnimationFrame(()=>state.showStep());}

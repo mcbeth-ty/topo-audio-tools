@@ -77,3 +77,12 @@
 @keyframes atlas-section-bob { 50% { transform:translateY(4px); } }
 @media(max-width:700px) { .atlas-demo-root .atlas-model-next { width:108px; height:42px; gap:7px; font-size:12px!important; }.atlas-model-next>span:last-child { font-size:25px; } }
 @media(prefers-reduced-motion:reduce) { .atlas-section-arrow>span:last-child,.atlas-path-highlight .study-pathfinder-launch { animation:none; } }
+
+.atlas-section-atlas .atlas-section-arrow {
+  position:absolute; left:50%; transform:translateX(-50%); z-index:20;
+  margin:0; background:#0a0a0aee; border-radius:4px;
+}
+/* Leave room for the introduction and in-viewport section cue on first load. */
+.atlas-section-atlas .study-svg {
+  max-height:clamp(280px,calc(100svh - 380px),640px);
+}
