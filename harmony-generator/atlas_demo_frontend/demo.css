@@ -84,5 +84,5 @@
 }
 /* Leave room for the introduction and in-viewport section cue on first load. */
 .atlas-section-atlas .study-svg {
-  max-height:clamp(280px,calc(100svh - 380px),640px);
+  max-height:clamp(280px,calc(100svh - 320px),700px);
 }

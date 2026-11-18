@@ -189,7 +189,8 @@ def main():
     .stApp {background:#0a0a0a;color:#ddd} .block-container {max-width:1500px!important;padding:clamp(16px,3vw,48px)!important}
     [data-testid="stMainBlockContainer"] {padding-top:28px!important}
     html,body,.stApp,h1,h2,p {font-family:Arial,Helvetica,sans-serif} h1 {font-size:clamp(28px,4vw,44px)!important} h2 {margin-top:12px!important}
-    .st-key-atlas_demo_intro {max-width:700px} .st-key-atlas_demo_intro p {font-size:14px;line-height:1.6}
+    .st-key-atlas_demo_intro {max-width:700px} .st-key-atlas_demo_intro p {font-size:12px;line-height:1.45;margin-bottom:6px}
+    .st-key-atlas_demo_intro [data-testid="stVerticalBlock"] {gap:6px}
     </style>''',unsafe_allow_html=True)
     st.title('Affective Atlas')
     with st.container(key='atlas_demo_intro'):
