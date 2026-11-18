@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 import os
 
 import streamlit as st
@@ -343,6 +344,16 @@ st.set_page_config(
     page_title="Harmonic Sequence Generator",
     layout="wide"
 )
+
+if not DEMO_MODE:
+    generation_mode = st.sidebar.selectbox(
+        "GENERATOR", ["Harmonic Sequences", "Ambient"], key="generation_mode"
+    )
+    if generation_mode == "Ambient":
+        from ambient_app import render_ambient
+
+        render_ambient()
+        st.stop()
 
 st.title("Harmonic Sequence Generator")
 st.caption("V2 probability-field prototype")
@@ -736,7 +747,7 @@ with st.sidebar:
     else:
         export_dir = st.text_input(
             "export directory",
-            "/Users/tylermcbeth/Applications/topo-audio/topo-analysis"
+            str(Path(__file__).resolve().parent.parent / "topo-analysis")
         )
 
         export_tag = st.text_input(

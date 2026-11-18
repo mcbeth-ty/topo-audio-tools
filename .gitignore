@@ -25,3 +25,29 @@ topo-analysis/output/
 # Optional backups / duplicate scripts
 * copy.py
 *_backup.py
+
+# Keep demo data available for Streamlit Cloud
+!topo-analysis/demo_archive/
+!topo-analysis/demo_archive/**
+# OS files remain excluded, including inside the public demo archive.
+**/.DS_Store
+
+# Local Ambient model snapshots (JSON only)
+harmony-generator/data/ambient_models/
+
+# Local-only archives, credentials, caches, and private Ambient research data
+/*.zip
+.env
+.env.*
+!.env.example
+**/.streamlit/secrets.toml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+harmony-generator/data/
+harmony-generator/ambient_mds_audit.md
+harmony-generator/ambient_local_neighborhood_report.md
+harmony-generator/ambient_affinity_notes.md
+*.sf2
+*.sf3

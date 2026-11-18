@@ -1,3 +1,5 @@
-streamlit
-pretty_midi
-numpy
+# Shared by the existing HSG entry point and the separate Affective Atlas demo.
+streamlit==1.57.0
+numpy==2.4.6
+pretty_midi==0.2.11
+pyFluidSynth==1.4.0
