@@ -82,7 +82,10 @@
   position:absolute; left:50%; transform:translateX(-50%); z-index:20;
   margin:0; background:#0a0a0aee; border-radius:4px;
 }
-/* Leave room for the introduction and in-viewport section cue on first load. */
+/* Explicitly add 120px to the previous responsive viewport height. */
+.atlas-section-atlas { container-type:inline-size; }
 .atlas-section-atlas .study-svg {
-  max-height:clamp(280px,calc(100svh - 320px),700px);
+  height:calc(clamp(280px,min(60cqw,calc(100svh - 320px)),700px) + 120px);
+  max-height:none;
+  aspect-ratio:auto;
 }
