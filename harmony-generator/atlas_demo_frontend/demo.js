@@ -76,7 +76,11 @@ export default function({parentElement,data,setTriggerValue}){
         renderAtlasStudy({parentElement:shell,data:payload,setTriggerValue:demoEvent});
         const root=shell.querySelector('.study-root'),svg=root.querySelector('svg');
         const scale=root.querySelector('.study-fourth-scale');if(scale){scale.classList.add('atlas-floating-scale');for(const label of scale.querySelectorAll('span:not(.study-fourth-gradient)'))label.hidden=true;root.append(scale);}
-        state.previous.disabled=state.index===0;state.next.disabled=state.index===2;
+        state.previous.disabled=state.index===0;
+        const nextLabel=state.index===0?'Next model / pathfinding':'Next model';
+        state.next.querySelector('span').textContent=nextLabel;
+        state.next.setAttribute('aria-label',nextLabel);state.next.title=nextLabel;
+        state.next.hidden=state.index===2;state.next.disabled=state.index===2;
         const position=()=>{
           const box=svg.getBoundingClientRect(),parent=shell.getBoundingClientRect();
           state.popup.element.style.top=`${box.top-parent.top+40}px`;state.previous.style.top=state.next.style.top=`${box.top-parent.top+box.height/2}px`;
