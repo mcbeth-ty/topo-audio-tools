@@ -111,7 +111,7 @@ def demo_component():
     controller=(assets/'audition.js').read_text().split('export default function',1)[0]
     study=(assets/'study.js').read_text().replace('export default function','function renderAtlasStudy',1)
     player=(assets/'audition.js').read_text().split('export default function',1)[1]
-    js=controller+(assets/'study_pathfinder.js').read_text()+study+'\nfunction renderAtlasPlayer'+player+(demo/'popup.js').read_text()+(demo/'demo.js').read_text()
+    js=controller+(assets/'study_pathfinder.js').read_text()+study+'\nfunction renderAtlasPlayer'+player+(demo/'popup.js').read_text()+(demo/'navigation.js').read_text()+(demo/'demo.js').read_text()
     return _component(js,(assets/'study.css').read_text()+(assets/'audition.css').read_text()+(demo/'demo.css').read_text())
 
 
