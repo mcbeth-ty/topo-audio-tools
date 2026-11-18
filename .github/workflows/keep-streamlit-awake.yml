@@ -28,7 +28,8 @@ jobs:
 
           const apps = [
             { name: 'Harmonic Sequence Generator', slug: 'harmonic-sequence', url: 'https://harmonic-sequence-demo.streamlit.app/', marker: 'HARMONIC SEQUENCE SETTINGS' },
-            { name: 'Topology Explorer', slug: 'topology-explorer', url: 'https://topo-explorer.streamlit.app/', marker: 'DATASET SUMMARY' }
+            { name: 'Topology Explorer', slug: 'topology-explorer', url: 'https://topo-explorer.streamlit.app/', marker: 'DATASET SUMMARY' },
+            { name: 'Affective Atlas', slug: 'affective-atlas', url: 'https://affective-atlas.streamlit.app/', marker: 'Affective Atlas' }
           ];
           const sleepButton = /Yes, get this app back up!/i;
           const sleepText = /This app has gone to sleep due to inactivity/i;
