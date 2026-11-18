@@ -21,11 +21,18 @@ export default function({parentElement,data,setTriggerValue}){
       }
     };
     state.showStep=()=>{
-      const stop=()=>{state.done=true;state.step='done';state.popup.hide();shell.classList.remove('atlas-path-highlight');for(let i=0;i<3;i++)if(!state.manual[i])state.tags[i]=true;};
+      const stop=()=>{clearTimeout(state.tagPause);state.done=true;state.step='done';state.popup.hide();shell.classList.remove('atlas-path-highlight');for(let i=0;i<3;i++)if(!state.manual[i])state.tags[i]=true;};
       state.complete=()=>{stop();state.render();};
       if(state.done)return;
       if(state.step==='intro')state.popup.show('',ATLAS_TEXT.intro,[],()=>{stop();state.render();});
-      if(state.step==='tags')state.popup.show('Understanding tags',ATLAS_TEXT.tags,[['Reveal Tags',()=>{state.tags[1]=true;state.step='path';state.render();state.showStep();}],['Continue',()=>{state.step='path';state.showStep();}]],()=>{stop();state.render();});
+      if(state.step==='tags')state.popup.show('Understanding tags',ATLAS_TEXT.tags,[['Reveal Tags',()=>{
+        state.tags[1]=true;state.step='tagsPause';state.popup.hide();state.render();
+        clearTimeout(state.tagPause);
+        state.tagPause=setTimeout(()=>{
+          if(state.disposed||state.done||state.index!==1||state.step!=='tagsPause')return;
+          state.step='path';state.showStep();
+        },3000);
+      }],['Continue',()=>{state.step='path';state.showStep();}]],()=>{stop();state.render();});
       if(state.step==='path'){state.seedPath();shell.classList.remove('atlas-path-highlight');state.popup.show('Finding paths between sounds',ATLAS_TEXT.path,[],()=>{stop();state.render();});}
       if(state.step==='usePath'){shell.classList.remove('atlas-path-highlight');state.popup.show('Create a path',ATLAS_TEXT.usePath,[],()=>{stop();state.render();});}
     };
@@ -140,7 +147,7 @@ export default function({parentElement,data,setTriggerValue}){
         heading?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
       };shell.append(arrow);
     }
-    state.dispose=()=>{if(state.disposed)return;state.disposed=true;state.popup.dispose();state.viewportObserver?.disconnect();for(const f of state.cleanup)f();for(const f of state.playerCleanups||[])f?.();shell.querySelector('.study-root')?.__study?.dispose();delete shell.__demo;};
+    state.dispose=()=>{if(state.disposed)return;state.disposed=true;clearTimeout(state.tagPause);state.popup.dispose();state.viewportObserver?.disconnect();for(const f of state.cleanup)f();for(const f of state.playerCleanups||[])f?.();shell.querySelector('.study-root')?.__study?.dispose();delete shell.__demo;};
   }
   state.data=data;
   if(data.audio_urls)state.urls=new Map(Object.entries(data.audio_urls));
