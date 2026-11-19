@@ -7,12 +7,35 @@ export default function({parentElement,data,setTriggerValue}){
     state.cleanup=[];shell.classList.add(`atlas-section-${data.section}`);
     state.popup=atlasPopup(shell);
     const error=document.createElement('div');error.className='atlas-error';error.setAttribute('role','status');shell.append(error);state.error=error;
+    state.watchedAudio=new WeakSet();
+    state.setLoading=id=>{
+      state.loading=id;
+      shell.querySelectorAll('.study-node').forEach(node=>{
+        const loading=node.dataset.id===id;
+        node.classList.toggle('atlas-audio-loading',loading);
+        node.setAttribute('aria-busy',String(loading));
+      });
+    };
+    state.watchAudio=()=>{
+      const viewer=shell.querySelector('.study-root')?.__study;
+      if(!viewer)return;
+      for(const [id,audio] of viewer.audios){
+        if(state.watchedAudio.has(audio))continue;
+        state.watchedAudio.add(audio);
+        const current=()=>shell.querySelector('.study-root')?.__study?.audios.get(id)===audio;
+        const loading=()=>{if(current())state.setLoading(id);};
+        const finish=()=>{if(current()&&state.loading===id)state.setLoading(null);};
+        audio.addEventListener('waiting',loading);audio.addEventListener('loadstart',()=>{if(!audio.paused)loading();});
+        for(const event of ['playing','pause','ended','error'])audio.addEventListener(event,finish);
+      }
+    };
     const common=()=>({public_demo:true,playback_context:state.data.epoch,audio_seconds:15,category_descriptions:{},thresholds:[.10,.23,.40],show_reference_cube:false});
     const items=ids=>ids.map((id,i)=>({id,number:i+1,label:'',notes:'',url:state.urls.get(`${state.data.section==='atlas'?state.index:0}:${id}`)||null}));
     const request=()=>{const r=state.data.response;return r&&r.key===`${state.data.section==='atlas'?state.index:0}:${r.id}`?{id:r.id,token:r.request}:null;};
     const demoEvent=(type,event)=>{
       if(type!=='event')return;
-      if(event.kind==='play'){emit({kind:'play',id:event.id,model:state.index});return;}
+      if(event.kind==='select'&&!event.id)state.setLoading(null);
+      if(event.kind==='play'){state.setLoading(event.id);state.error.textContent='';emit({kind:'play',id:event.id,model:state.index});return;}
       if(state.data.section==='atlas'&&event.kind==='explore_settings'&&typeof event.show_tags==='boolean'){
         state.tags[state.index]=event.show_tags;state.manual[state.index]=true;return;
       }
@@ -40,7 +63,7 @@ export default function({parentElement,data,setTriggerValue}){
       state.cleanup.push(atlasHostedFrame());
       state.cleanup.push(atlasSectionNav());
       const previous=document.createElement('button'),next=document.createElement('button');previous.className='atlas-model-previous';next.className='atlas-model-next';previous.textContent='‹';next.innerHTML='<span>Next model / pathfinding</span><span aria-hidden="true">›</span>';previous.setAttribute('aria-label','Previous model');next.setAttribute('aria-label','Next model / pathfinding');previous.title='Previous model';next.title='Next model / pathfinding';shell.append(previous,next);
-      const move=direction=>{const to=Math.max(0,Math.min(2,state.index+direction));if(to===state.index)return;shared.stop();state.index=to;if(!state.done&&to===1&&state.step==='intro'){state.step='tags';}else if(!state.done&&to!==1&&state.step!=='intro'){state.complete();}state.render();if(!state.done)state.showStep();};
+      const move=direction=>{const to=Math.max(0,Math.min(2,state.index+direction));if(to===state.index)return;shared.stop();state.setLoading(null);state.index=to;if(!state.done&&to===1&&state.step==='intro'){state.step='tags';}else if(!state.done&&to!==1&&state.step!=='intro'){state.complete();}state.render();if(!state.done)state.showStep();};
       previous.onclick=()=>move(-1);next.onclick=()=>{clearTimeout(state.nextModelCue);next.classList.remove('atlas-next-cue');move(1);};
       state.nextModelCue=setTimeout(()=>{if(!state.disposed&&state.index===0)next.classList.add('atlas-next-cue');},20000);
       state.cleanup.push(()=>clearTimeout(state.nextModelCue));
@@ -164,6 +187,9 @@ export default function({parentElement,data,setTriggerValue}){
   if(data.audio_urls)state.urls=new Map(Object.entries(data.audio_urls));
   if(data.response)state.urls.set(data.response.key,data.response.url);
   state.error.textContent=data.error||'';state.render();
+  if(data.error)state.setLoading(null);
+  else if(state.loading)state.setLoading(state.loading);
+  state.watchAudio();
   // Retain state across data updates; dispose only after actual DOM removal.
   return ()=>{queueMicrotask(()=>{if(!shell.isConnected)state.dispose();});};
 }

@@ -99,3 +99,14 @@
 @media(prefers-reduced-motion:reduce) {.atlas-model-next.atlas-next-cue {animation:none;outline:2px solid #ddd;outline-offset:3px;}}
 
 .atlas-demo-root .atlas-model-next[hidden] {display:none;}
+
+/* An open arc acknowledges a click while synthesis or buffering is pending. */
+.atlas-demo-root .study-node.atlas-audio-loading .study-playing-ring {
+  display:block; opacity:.85; stroke-width:1;
+  stroke-dasharray:12 24; transform-box:fill-box; transform-origin:center;
+  animation:atlas-audio-loading .7s linear infinite;
+}
+@keyframes atlas-audio-loading {to {transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce) {
+  .atlas-demo-root .study-node.atlas-audio-loading .study-playing-ring {animation:none;}
+}
