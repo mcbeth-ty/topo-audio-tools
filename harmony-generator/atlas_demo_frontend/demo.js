@@ -37,6 +37,7 @@ export default function({parentElement,data,setTriggerValue}){
       if(state.step==='usePath'){shell.classList.remove('atlas-path-highlight');state.popup.show('Create a path',ATLAS_TEXT.usePath,[],()=>{stop();state.render();});}
     };
     if(data.section==='atlas'){
+      state.cleanup.push(atlasHostedFrame());
       state.cleanup.push(atlasSectionNav());
       const previous=document.createElement('button'),next=document.createElement('button');previous.className='atlas-model-previous';next.className='atlas-model-next';previous.textContent='‹';next.innerHTML='<span>Next model / pathfinding</span><span aria-hidden="true">›</span>';previous.setAttribute('aria-label','Previous model');next.setAttribute('aria-label','Next model / pathfinding');previous.title='Previous model';next.title='Next model / pathfinding';shell.append(previous,next);
       const move=direction=>{const to=Math.max(0,Math.min(2,state.index+direction));if(to===state.index)return;shared.stop();state.index=to;if(!state.done&&to===1&&state.step==='intro'){state.step='tags';}else if(!state.done&&to!==1&&state.step!=='intro'){state.complete();}state.render();if(!state.done)state.showStep();};
