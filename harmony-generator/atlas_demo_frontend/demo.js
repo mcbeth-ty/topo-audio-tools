@@ -1,6 +1,6 @@
 export default function({parentElement,data,setTriggerValue}){
   const shell=parentElement.querySelector('.atlas-demo-root'),shared=controller();shared.context(data.epoch);
-  const emit=event=>setTriggerValue('event',{...event,event_id:crypto.randomUUID()});
+  const emit=event=>state.trigger('event',{...event,event_id:crypto.randomUUID()});
   let state=shell.__demo;
   if(!state){
     state={data,urls:new Map(),index:0,step:'intro',done:false,tags:[true,false,true],manual:[false,false,false],popup:null,viewed:false,disposed:false};shell.__demo=state;
@@ -157,6 +157,9 @@ export default function({parentElement,data,setTriggerValue}){
     }
     state.dispose=()=>{if(state.disposed)return;state.disposed=true;clearTimeout(state.tagPause);state.popup.dispose();state.viewportObserver?.disconnect();for(const f of state.cleanup)f();for(const f of state.playerCleanups||[])f?.();shell.querySelector('.study-root')?.__study?.dispose();delete shell.__demo;};
   }
+  // Existing node/form handlers survive updates; route them through the latest
+  // Streamlit callback after an idle reconnect instead of the initial closure.
+  state.trigger=setTriggerValue;
   state.data=data;
   if(data.audio_urls)state.urls=new Map(Object.entries(data.audio_urls));
   if(data.response)state.urls.set(data.response.key,data.response.url);
